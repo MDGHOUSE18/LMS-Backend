@@ -1,4 +1,5 @@
 ﻿using LMS.Application.DTOs.Loan;
+using LMS.Application.Interfaces.common;
 using LMS.Application.Interfaces.Repositories.Loan;
 using LMS.Application.Interfaces.Services.Loan;
 using System;
@@ -15,17 +16,19 @@ namespace LMS.Application.Services.Loan
         private readonly IWorkflowService _workflowService;
         private readonly IEligibilityService _eligibilityService;
         private readonly IAuditService _auditService;
+        private readonly ICurrentUserService _currentUserService;
 
         public LoanService(
         ILoanRepository loanRepo,
         IWorkflowService workflow,
         IEligibilityService eligibility,
-        IAuditService audit)
+        IAuditService audit,ICurrentUserService currentUserService)
         {
             _loanRepository = loanRepo;
             _workflowService = workflow;
             _eligibilityService = eligibility;
             _auditService = audit;
+            _currentUserService = currentUserService;
         }
 
         public Task<int> CreateDraftAsync(CreateLoanRequest request)
