@@ -4,9 +4,14 @@ obj/
 *.user
 *.suo
 *.cache
-*.log
+
 *.db
 appsettings.Development.json
 node_modules/
 dist/
 .env
+
+# Logs
+LMS.API/logs/
+**/logs/
+*.log
