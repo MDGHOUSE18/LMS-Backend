@@ -1,4 +1,4 @@
-﻿using LMS.Application.common;
+﻿using LMS.Application.Common.Settings;
 using LMS.Application.Interfaces.Repositories;
 using LMS.Application.Interfaces.Services;
 using LMS.Domain.Entities.Auth;

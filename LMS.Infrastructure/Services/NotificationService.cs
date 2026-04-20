@@ -1,4 +1,4 @@
-﻿using LMS.Application.common;
+﻿using LMS.Application.Common.Settings;
 using LMS.Application.Interfaces.Repositories;
 using Microsoft.Extensions.Options;
 using System;

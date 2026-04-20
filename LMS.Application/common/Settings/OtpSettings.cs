@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LMS.Application.common
+namespace LMS.Application.Common.Settings
 {
     public class OtpSettings
     {

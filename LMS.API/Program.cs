@@ -1,5 +1,5 @@
 using LMS.API.Middleware;
-using LMS.Application.common;
+using LMS.Application.Common.Settings;
 using LMS.Application.Interfaces.common;
 using LMS.Application.Interfaces.Handlers;
 using LMS.Application.Interfaces.Repositories;
