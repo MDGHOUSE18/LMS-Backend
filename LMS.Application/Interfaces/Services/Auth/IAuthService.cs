@@ -1,5 +1,5 @@
 ﻿using LMS.Application.DTOs.Auth;
-using LMS.Application.DTOs.common;
+using LMS.Application.DTOs.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;

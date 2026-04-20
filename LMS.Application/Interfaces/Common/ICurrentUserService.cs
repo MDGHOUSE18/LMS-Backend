@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LMS.Application.Interfaces.common
+namespace LMS.Application.Interfaces.Common
 {
     public interface ICurrentUserService
     {

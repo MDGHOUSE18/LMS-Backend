@@ -1,4 +1,4 @@
-﻿using LMS.Application.common.Exceptions;
+﻿using LMS.Application.Common.Exceptions;
 using System.Net;
 using System.Text.Json;
 

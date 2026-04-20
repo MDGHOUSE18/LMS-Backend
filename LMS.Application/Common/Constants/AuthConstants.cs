@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LMS.Application.common.Constants
+namespace LMS.Application.Common.Constants
 {
     public static class AuthMessages
     {

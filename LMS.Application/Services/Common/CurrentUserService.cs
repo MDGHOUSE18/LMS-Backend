@@ -1,4 +1,4 @@
-﻿using LMS.Application.Interfaces.common;
+﻿using LMS.Application.Interfaces.Common;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LMS.Application.Services.common
+namespace LMS.Application.Services.Common
 {
     public class CurrentUserService : ICurrentUserService
     {

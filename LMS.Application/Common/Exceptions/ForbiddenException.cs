@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LMS.Application.common.Exceptions
+namespace LMS.Application.Common.Exceptions
 {
     /// <summary>
     /// Thrown when user is authenticated but doesn't have permission (account inactive, locked, etc.)

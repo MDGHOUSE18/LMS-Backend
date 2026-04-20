@@ -1,12 +1,12 @@
 using LMS.API.Middleware;
 using LMS.Application.Common.Settings;
-using LMS.Application.Interfaces.common;
+using LMS.Application.Interfaces.Common;
 using LMS.Application.Interfaces.Handlers;
 using LMS.Application.Interfaces.Repositories;
 using LMS.Application.Interfaces.Security;
 using LMS.Application.Interfaces.Services;
 using LMS.Application.Services.Auth;
-using LMS.Application.Services.common;
+using LMS.Application.Services.Common;
 using LMS.Infrastructure.Persistence.Context;
 using LMS.Infrastructure.Persistence.Repositories.Auth;
 using LMS.Infrastructure.Services;

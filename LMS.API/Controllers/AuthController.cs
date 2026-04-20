@@ -1,6 +1,6 @@
 ﻿using Azure.Core;
 using LMS.Application.DTOs.Auth;
-using LMS.Application.DTOs.common;
+using LMS.Application.DTOs.Common;
 using LMS.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;

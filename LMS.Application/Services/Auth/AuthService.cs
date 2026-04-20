@@ -1,7 +1,7 @@
-﻿using LMS.Application.common.Constants;
-using LMS.Application.common.Exceptions;
+﻿using LMS.Application.Common.Constants;
+using LMS.Application.Common.Exceptions;
 using LMS.Application.DTOs.Auth;
-using LMS.Application.DTOs.common;
+using LMS.Application.DTOs.Common;
 using LMS.Application.Interfaces.Repositories;
 using LMS.Application.Interfaces.Security;
 using LMS.Application.Interfaces.Services;

@@ -1,5 +1,5 @@
 ﻿using LMS.Application.DTOs.Loan;
-using LMS.Application.Interfaces.common;
+using LMS.Application.Interfaces.Common;
 using LMS.Application.Interfaces.Repositories.Loan;
 using LMS.Application.Interfaces.Services.Loan;
 using System;

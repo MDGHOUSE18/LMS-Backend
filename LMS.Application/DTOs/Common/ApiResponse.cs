@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LMS.Application.DTOs.common
+namespace LMS.Application.DTOs.Common
 {
     public class ApiResponse<T>
     {
