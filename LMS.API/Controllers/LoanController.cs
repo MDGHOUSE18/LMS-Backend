@@ -1,10 +1,12 @@
 ﻿using LMS.Application.DTOs.Loan;
 using LMS.Application.Interfaces.Services.Loan;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LMS.API.Controllers
 {
     [ApiController]
+    //[Authorize]
     [Route("api/loan")]
     public class LoanController : ControllerBase
     {

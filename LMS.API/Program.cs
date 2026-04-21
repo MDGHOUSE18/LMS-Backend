@@ -3,12 +3,14 @@ using LMS.Application.Common.Settings;
 using LMS.Application.Interfaces.Common;
 using LMS.Application.Interfaces.Handlers;
 using LMS.Application.Interfaces.Repositories;
+using LMS.Application.Interfaces.Repositories.Loan;
 using LMS.Application.Interfaces.Security;
 using LMS.Application.Interfaces.Services;
 using LMS.Application.Services.Auth;
 using LMS.Application.Services.Common;
 using LMS.Infrastructure.Persistence.Context;
 using LMS.Infrastructure.Persistence.Repositories.Auth;
+using LMS.Infrastructure.Persistence.Repositories.Loan;
 using LMS.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -44,6 +46,7 @@ builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddScoped<IEmailVerificationRepository, EmailVerificationRepository>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<ILoanFinancialRepository, LoanFinancialRepository>();
 
 builder.Services.AddControllers();
 

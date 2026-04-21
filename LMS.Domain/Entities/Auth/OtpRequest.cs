@@ -20,5 +20,7 @@ namespace LMS.Domain.Entities.Auth
         public DateTime CreatedAt {  get; set; }
         public DateTime VerifiedAt {  get; set; }
 
+
+        public User User { get; set; }
     }
 }

@@ -23,6 +23,7 @@ namespace LMS.Infrastructure.Persistence.Context
         public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
         public DbSet<EmailVerificationToken> EmailVerificationTokens { get; set; }
         public DbSet<LoanApplication> LoanApplications { get; set; }
+        public DbSet<LoanFinancialDetails> LoanFinancialDetails { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 
@@ -37,29 +38,27 @@ namespace LMS.Infrastructure.Persistence.Context
 
             // OtpRequest → User relationship
             modelBuilder.Entity<OtpRequest>()
-                .HasOne<User>()
-                .WithMany()
-                .HasForeignKey("UserId")
-                .OnDelete(DeleteBehavior.Cascade);  // Delete OTPs when user is deleted
+                .HasOne(o => o.User)           
+                .WithMany(u => u.OtpRequests)  
+                .HasForeignKey(o => o.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            // UserRefreshToken → User relationship
             modelBuilder.Entity<UserRefreshToken>()
                 .HasOne<User>()
-                .WithMany()
-                .HasForeignKey("UserId")
-                .OnDelete(DeleteBehavior.Cascade);  // Delete tokens when user is deleted
+                .WithMany(u => u.UserRefreshTokens)   
+                .HasForeignKey(rt => rt.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            // UserLoginHistory → User relationship
             modelBuilder.Entity<UserLoginHistory>()
                 .HasOne<User>()
-                .WithMany()
-                .HasForeignKey("UserId")
-                .OnDelete(DeleteBehavior.Cascade);  // Delete history when user is deleted
+                .WithMany(u => u.UserLoginHistories)  
+                .HasForeignKey(h => h.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // PasswordResetToken → User relationship
             modelBuilder.Entity<PasswordResetToken>()
                 .HasOne<User>()
-                .WithMany()
+                .WithMany(u => u.PasswordResetTokens)
                 .HasForeignKey("UserId")
                 .OnDelete(DeleteBehavior.Cascade);
 

@@ -40,6 +40,10 @@ namespace LMS.Infrastructure.Persistence.Repositories.Auth
             var tokens =await _dbContext.UserRefreshTokens
                             .Where(rt => rt.UserId == userId && !rt.IsRevoked)
                             .ToListAsync();
+            if (tokens == null)
+            {
+                return;
+            }
             foreach (var token in tokens)
             {
                 token.IsRevoked = true;
