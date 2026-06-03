@@ -18,7 +18,7 @@ namespace LMS.Infrastructure.Persistence.Repositories.Auth
         }
         public async Task AddAsync(UserLoginHistory history)
             {
-            _dbCOntext.UserLoginHistory.Add(history);
+            _dbCOntext.UserLoginHistories.Add(history);
 
             await _dbCOntext.SaveChangesAsync();
         }

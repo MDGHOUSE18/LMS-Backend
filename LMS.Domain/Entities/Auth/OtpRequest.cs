@@ -21,6 +21,7 @@ namespace LMS.Domain.Entities.Auth
         public DateTime VerifiedAt {  get; set; }
 
 
-        public User User { get; set; }
+        // Navigation Property
+        public User User { get; set; } = null!;
     }
 }
