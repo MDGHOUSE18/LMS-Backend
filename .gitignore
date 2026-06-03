@@ -1,68 +1,53 @@
 ```
-# Build artifacts
-bin/
-obj/
-*.dll
+# Build artifacts and binaries
 *.exe
-*.pdb
+*.dll
 *.so
-*.dylib
-*.jar
-*.war
-*.class
+*.a
+*.obj
+*.out
+*.pdb
+*.ilk
 
 # Dependencies
 packages/
-node_modules/
-vendor/
+bin/
+obj/
+out/
 
-# Logs
+# Logs and temp files
 *.log
-**/logs/
+*.tmp
+*.temp
+*.cache
 
-# Environment specific
+# Environment
 .env
 .env.local
-.env.*
-!*.env.example
+*.env.*
 
-# User-specific
+# Editors
 .vs/
 .vscode/
 .idea/
 *.userprefs
-*.suo
 *.user
-*.aps
-*.ncb
-*.obj/
-**/Debug/
-**/Release/
 
-# OS generated files
+# OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
 desktop.ini
 
-# Testing
+# Test coverage
 coverage/
-**/test-results/
-*.coverage
+htmlcov/
 .coverage
 
-# Local configuration
-appsettings.Local.json
-config/local.json
-
-# Temporary files
-*.tmp
-*.temp
-*.bak
-*.cache
-*~
+# Debug and build outputs
+Debug/
+Release/
+x64/
+x86/
+build/
+dist/
 ```
