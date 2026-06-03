@@ -16,6 +16,8 @@ namespace LMS.Domain.Entities.Auth
         public string? UserAgent{ get; set; }
         public bool IsSuccess { get; set; }
         public string? FailureReason { get; set; }
+        // Navigation Property
+        public User User { get; set; } = null!;
 
     }
 }

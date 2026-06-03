@@ -18,5 +18,7 @@ namespace LMS.Domain.Entities.Auth
         public string? ReplacedByTokenHash { get; set; }
         public string? IpAddress { get; set; }
         public bool IsActive { get; set; }
+        // Navigation Property
+        public User User { get; set; } = null!;
     }
 }

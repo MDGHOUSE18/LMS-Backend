@@ -49,7 +49,7 @@ namespace LMS.Infrastructure.Persistence.Repositories.Auth
                 token.IsRevoked = true;
                 token.RevokedAt=DateTime.UtcNow;
             }
-            var userHistory = await _dbContext.UserLoginHistory
+            var userHistory = await _dbContext.UserLoginHistories
                                 .Where(h => h.UserId == userId)
                                 .OrderByDescending(h => h.LoginTime)
                                 .FirstOrDefaultAsync();

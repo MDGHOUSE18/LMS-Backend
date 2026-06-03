@@ -15,5 +15,8 @@ namespace LMS.Domain.Entities.Auth
         public bool IsUsed { get; set; }
         public DateTime CreatedAt { get; set; }
 
+        // Navigation Property
+        public User User { get; set; } = null!;
+
     }
 }

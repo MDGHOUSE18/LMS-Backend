@@ -17,5 +17,7 @@ namespace LMS.Domain.Entities.Loan
 
         public decimal MonthlyIncome { get; set; }
         public decimal? ExistingEMI { get; set; }
+        // Navigation Property (1:1 Relationship)
+        public LoanApplication LoanApplication { get; set; } = null!;
     }
 }

@@ -6,8 +6,10 @@ using LMS.Application.Interfaces.Repositories;
 using LMS.Application.Interfaces.Repositories.Loan;
 using LMS.Application.Interfaces.Security;
 using LMS.Application.Interfaces.Services;
+using LMS.Application.Interfaces.Services.Loan;
 using LMS.Application.Services.Auth;
 using LMS.Application.Services.Common;
+using LMS.Application.Services.Loan;
 using LMS.Infrastructure.Persistence.Context;
 using LMS.Infrastructure.Persistence.Repositories.Auth;
 using LMS.Infrastructure.Persistence.Repositories.Loan;
@@ -47,6 +49,12 @@ builder.Services.AddScoped<IEmailVerificationRepository, EmailVerificationReposi
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<ILoanFinancialRepository, LoanFinancialRepository>();
+builder.Services.AddScoped<ILoanRepository, LoanRepository>();
+builder.Services.AddScoped<IWorkflowService, WorkflowService>();
+builder.Services.AddScoped<IEligibilityService, EligibilityService>();
+builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddScoped<ILoanService, LoanService>();
+
 
 builder.Services.AddControllers();
 
