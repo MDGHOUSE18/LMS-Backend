@@ -11,8 +11,8 @@ namespace LMS.Application.Interfaces.Repositories
     public interface IOtpRepository
     {
         Task AddAsync(OtpRequest otp);
-        Task<OtpRequest?> GetActiveOtpAsync(int userId, OtpPurpose purpose);
-        Task<int?> GetOtpAttemptsAsync(int userId, OtpPurpose login);
+        Task<OtpRequest?> GetActiveOtpAsync(Guid userId, OtpPurpose purpose);
+        Task<int?> GetOtpAttemptsAsync(Guid userId, OtpPurpose login);
         Task UpdateAsync(OtpRequest otp);
     }
 }

@@ -24,23 +24,17 @@ namespace LMS.Infrastructure.Persistence.Repositories.Auth
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<OtpRequest?> GetActiveOtpAsync(int userId, OtpPurpose purpose)
+        public async Task<OtpRequest?> GetActiveOtpAsync(Guid userId, OtpPurpose purpose)
         {
             return await _dbContext.OtpRequests
-                .Where(o => o.UserId == userId
-                         && o.Purpose == purpose.ToString()
-                         && !o.Isused
-                         && o.ExpiresAt > DateTime.UtcNow)
-                .OrderByDescending(o=>o.Id)
+                .Where(o => o.UserId == userId && o.ExpiresAt > DateTime.UtcNow)
+                .OrderByDescending(o => o.ExpiresAt)
                 .FirstOrDefaultAsync();
         }
 
-        public Task<int?> GetOtpAttemptsAsync(int userId, OtpPurpose login)
+        public Task<int?> GetOtpAttemptsAsync(Guid userId, OtpPurpose login)
         {
-            return _dbContext.OtpRequests
-                .Where(o => o.UserId == userId && o.Purpose == login.ToString())
-                .Select(o => (int?)o.AttemptCount)
-                .FirstOrDefaultAsync();
+            return Task.FromResult<int?>(null);
         }
 
         public async Task UpdateAsync(OtpRequest otp)

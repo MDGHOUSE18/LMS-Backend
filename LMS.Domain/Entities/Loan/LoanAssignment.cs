@@ -9,9 +9,9 @@ namespace LMS.Domain.Entities.Loan
 {
     public class LoanAssignment
     {
-        public int Id { get; set; }
-        public int LoanApplicationId { get; set; }
-        public int AssignedOfficerId { get; set; }
+        public Guid Id { get; set; }
+        public Guid LoanApplicationId { get; set; }
+        public Guid AssignedOfficerId { get; set; }
         public DateTime AssignedAt { get; set; }
 
         // Navigation Properties

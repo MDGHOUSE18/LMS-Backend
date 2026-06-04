@@ -11,11 +11,11 @@ namespace LMS.Domain.Entities.Workflow
 {
     public class LoanStatusHistory
     {
-        public int Id { get; set; }
-        public int LoanApplicationId { get; set; }
+        public Guid Id { get; set; }
+        public Guid LoanApplicationId { get; set; }
         public int? FromStatusId { get; set; }
         public int ToStatusId { get; set; }
-        public int ChangedBy { get; set; }
+        public Guid ChangedBy { get; set; }
         public DateTime ChangedAt { get; set; }
         public string? Comments { get; set; }
 

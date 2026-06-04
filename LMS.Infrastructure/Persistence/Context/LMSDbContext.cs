@@ -87,130 +87,7 @@ namespace LMS.Infrastructure.Persistence.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            // =========================================================
-            // 1. EXPLICIT TABLE & SCHEMA MAPPINGS (DB-First Exact Match)
-            // =========================================================
-            modelBuilder.Entity<User>().ToTable("Users", "dbo");
-            modelBuilder.Entity<Role>().ToTable("Roles", "dbo");
-            modelBuilder.Entity<UserLoginHistory>().ToTable("UserLoginHistory", "dbo");
-            modelBuilder.Entity<UserRefreshToken>().ToTable("UserRefreshTokens", "dbo");
-            modelBuilder.Entity<EmailVerificationToken>().ToTable("EmailVerificationTokens", "dbo");
-            modelBuilder.Entity<OtpRequest>().ToTable("OTPRequests", "dbo");
-            modelBuilder.Entity<PasswordResetToken>().ToTable("PasswordResetTokens", "dbo");
-
-            modelBuilder.Entity<LoanApplication>().ToTable("LoanApplication", "loan");
-            modelBuilder.Entity<LoanFinancialDetails>().ToTable("LoanFinancialDetails", "loan");
-            modelBuilder.Entity<Document>().ToTable("Documents", "loan");
-            modelBuilder.Entity<LoanAssignment>().ToTable("LoanAssignment", "loan");
-            modelBuilder.Entity<EligibilityResult>().ToTable("EligibilityResults", "loan");
-
-            modelBuilder.Entity<LoanPurpose>().ToTable("LoanPurpose", "lookup");
-            modelBuilder.Entity<LoanStatus>().ToTable("LoanStatus", "lookup");
-            modelBuilder.Entity<EmploymentType>().ToTable("EmploymentType", "lookup");
-            modelBuilder.Entity<DocumentType>().ToTable("DocumentType", "lookup");
-            modelBuilder.Entity<VerificationStatus>().ToTable("VerificationStatus", "lookup");
-
-            modelBuilder.Entity<LoanStatusHistory>().ToTable("LoanStatusHistory", "workflow");
-            modelBuilder.Entity<AuditLog>().ToTable("AuditLogs", "audit");
-
-            // =========================================================
-            // 2. RELATIONSHIPS & FOREIGN KEYS (Exact SQL Constraint Match)
-            // =========================================================
-
-            // --- USER & AUTH RELATIONSHIPS ---
-            modelBuilder.Entity<User>()
-                .HasOne(u => u.Role)
-                .WithMany()
-                .HasForeignKey(u => u.RoleId)
-                .OnDelete(DeleteBehavior.Restrict); // DB: NO ACTION
-
-            modelBuilder.Entity<EmailVerificationToken>()
-                .HasOne(e => e.User)
-                .WithMany()
-                .HasForeignKey(e => e.UserId)
-                .OnDelete(DeleteBehavior.Cascade); // DB: ON DELETE CASCADE
-
-            modelBuilder.Entity<OtpRequest>()
-                .HasOne(o => o.User)
-                .WithMany()
-                .HasForeignKey(o => o.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<PasswordResetToken>()
-                .HasOne(p => p.User)
-                .WithMany()
-                .HasForeignKey(p => p.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<UserLoginHistory>()
-                .HasOne(h => h.User)
-                .WithMany()
-                .HasForeignKey(h => h.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<UserRefreshToken>()
-                .HasOne(r => r.User)
-                .WithMany()
-                .HasForeignKey(r => r.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // --- LOAN CORE RELATIONSHIPS ---
-            modelBuilder.Entity<LoanApplication>()
-                .HasOne(l => l.User)
-                .WithMany()
-                .HasForeignKey(l => l.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<LoanFinancialDetails>()
-                .HasOne(f => f.LoanApplication)
-                .WithOne() // 1:1 relationship
-                .HasForeignKey<LoanFinancialDetails>(f => f.LoanApplicationId)
-                .OnDelete(DeleteBehavior.Cascade); // DB: ON DELETE CASCADE
-
-            modelBuilder.Entity<LoanAssignment>()
-                .HasOne(a => a.LoanApplication)
-                .WithMany()
-                .HasForeignKey(a => a.LoanApplicationId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<LoanAssignment>()
-                .HasOne(a => a.AssignedOfficer)
-                .WithMany()
-                .HasForeignKey(a => a.AssignedOfficerId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Document>()
-                .HasOne(d => d.Loan)
-                .WithMany(la => la.Documents)
-                .HasForeignKey(d => d.LoanId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<EligibilityResult>()
-                .HasOne(e => e.LoanApplication)
-                .WithMany()
-                .HasForeignKey(e => e.LoanApplicationId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // --- WORKFLOW RELATIONSHIPS ---
-            modelBuilder.Entity<LoanStatusHistory>()
-                .HasOne(h => h.LoanApplication)
-                .WithMany()
-                .HasForeignKey(h => h.LoanApplicationId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Payment>()
-                .HasOne(p => p.Loan)
-                .WithMany(la => la.Payments)
-                .HasForeignKey(p => p.LoanId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // AuditLog → User relationship
-            modelBuilder.Entity<AuditLog>()
-                .HasOne(al => al.User)
-                .WithMany()
-                .HasForeignKey(al => al.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
+            Configurations.LmsDbFirstConfiguration.Apply(modelBuilder);
         }
 
         /// <summary>
@@ -244,6 +121,7 @@ namespace LMS.Infrastructure.Persistence.Context
 
                 var auditLog = new AuditLog
                 {
+                    LogId = Guid.NewGuid(),
                     UserId = currentUserId ?? "SYSTEM",
                     Action = entry.State.ToString(),
                     EntityType = entityType,

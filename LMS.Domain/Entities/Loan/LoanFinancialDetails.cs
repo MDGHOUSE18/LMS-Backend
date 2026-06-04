@@ -8,12 +8,13 @@ namespace LMS.Domain.Entities.Loan
 {
     public class LoanFinancialDetails
     {
-        public int Id { get; set; }
-        public int LoanApplicationId { get; set; }
+        public Guid Id { get; set; }
+        public Guid LoanApplicationId { get; set; }
 
         public decimal LoanAmount { get; set; }
         public int TenureMonths { get; set; }
         public decimal? InterestRate { get; set; }
+        public decimal Emi { get; set; }
 
         public decimal MonthlyIncome { get; set; }
         public decimal? ExistingEMI { get; set; }

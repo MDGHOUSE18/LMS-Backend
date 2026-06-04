@@ -12,6 +12,6 @@ namespace LMS.Application.Interfaces.Repositories
         Task AddAsync(EmailVerificationToken tokenEntity);
         Task<EmailVerificationToken> GetValidTokenAsync(string tokenHash);
         Task UpdateAsync(EmailVerificationToken tokenEntity);
-        Task InvalidateOldTokensAsync(int userId);
+        Task InvalidateOldTokensAsync(Guid userId);
     }
 }

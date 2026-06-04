@@ -34,16 +34,9 @@ namespace LMS.Application.Services.Auth
             var hashedOtp = HashOtp(otp);
             OtpRequest otpRequest = new OtpRequest
             {
-                UserId = ToLegacyInt(user.Id),
-                Purpose = OtpPurpose.Login.ToString(),
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
                 OTPHash = hashedOtp,
-                MobileNumber = user.Mobile,
-
-                AttemptCount = 0,
-                MaxAttempts = 5,
-
-                Isused = false,
-                CreatedAt = DateTime.UtcNow,
                 ExpiresAt = DateTime.UtcNow.AddMinutes(5)
             };
             await _otpRepository.AddAsync(otpRequest);
@@ -51,42 +44,30 @@ namespace LMS.Application.Services.Auth
 
             return otp.ToString();
         }
-        public async Task<OtpRequest> GetActiveOtpAsync(int userId,OtpPurpose purpose)
+        public async Task<OtpRequest?> GetActiveOtpAsync(Guid userId, OtpPurpose purpose)
         {
             return await _otpRepository.GetActiveOtpAsync(userId, purpose);
         }
+
         public async Task<bool> VerifyOtpAsync(User user, string otp, OtpPurpose purpose)
         {
-            var otpRequest = await _otpRepository.GetActiveOtpAsync(ToLegacyInt(user.Id), purpose);
-            if (otpRequest==null)
+            var otpRequest = await _otpRepository.GetActiveOtpAsync(user.Id, purpose);
+            if (otpRequest == null || otpRequest.ExpiresAt < DateTime.UtcNow)
             {
                 throw new Exception("OTP has expired. Please request a new OTP.");
             }
-            if (otpRequest.AttemptCount >= otpRequest.MaxAttempts)
-            {
-                throw new Exception("Too many incorrect OTP attempts. Please try again after 15 minutes.");
-            }
-            if (otpRequest.ExpiresAt < DateTime.UtcNow)
-            {
-                throw new Exception("OTP has expired. Please request a new OTP.");
-            }
-            if (otpRequest.Isused)
-            {
-                throw new Exception("OTP has already been used. Please request a new OTP.");
-            }
+
             bool isValid = VerifyHash(otp, otpRequest.OTPHash);
             if (isValid)
             {
-                otpRequest.Isused = true;
-                otpRequest.VerifiedAt = DateTime.UtcNow;
                 await _otpRepository.UpdateAsync(otpRequest);
                 return true;
             }
-            otpRequest.AttemptCount += 1;
-            await _otpRepository.UpdateAsync(otpRequest);
+
             return false;
         }
-        public async Task<int?> GetOtpAttemptsAsync(int userId, OtpPurpose login)
+
+        public async Task<int?> GetOtpAttemptsAsync(Guid userId, OtpPurpose login)
         {
             return await _otpRepository.GetOtpAttemptsAsync(userId, login);
         }
@@ -142,13 +123,6 @@ namespace LMS.Application.Services.Auth
             return new string('*', maskedLength) + mobile.Substring(maskedLength);
         }
 
-        private static int ToLegacyInt(Guid id)
-        {
-            var bytes = id.ToByteArray();
-            return Math.Abs(BitConverter.ToInt32(bytes, 0));
-        }
-
-       
         #endregion
     }
 }

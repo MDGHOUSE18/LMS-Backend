@@ -11,7 +11,7 @@ namespace LMS.Application.Interfaces.Repositories
     {
         Task<User?> GetByEmailAsync(string email);
 
-        Task<User?> GetByIdAsync(int userId);
+        Task<User?> GetByIdAsync(Guid userId);
 
         Task CreateAsync(User user);
         Task UpdateAsync(User user);

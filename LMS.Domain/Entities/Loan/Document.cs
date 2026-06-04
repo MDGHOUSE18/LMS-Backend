@@ -13,6 +13,7 @@ namespace LMS.Domain.Entities.Loan
         public Guid LoanId { get; set; }
         public Guid UserId { get; set; }
         
+        public int DocumentTypeId { get; set; }
         public string Type { get; set; } // Aadhaar, PAN, SalarySlip, BankStatement
         public string FilePath { get; set; } // S3 path or storage path
         public string FileName { get; set; }

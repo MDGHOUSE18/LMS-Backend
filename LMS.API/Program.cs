@@ -22,10 +22,15 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Database configuration
+// Database configuration (DB-first: run your LMS SQL script against this database first)
+var connectionString = builder.Configuration.GetConnectionString("LMSDB_LOCAL");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException("Connection string 'LMSDB_LOCAL' is missing. Set it in appsettings.json.");
+}
+
 builder.Services.AddDbContext<LMSDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("LMSDB_LOCAL"))
-);
+    options.UseSqlServer(connectionString));
 builder.Services.Configure<OtpSettings>(
     builder.Configuration.GetSection("OtpSettings"));
 

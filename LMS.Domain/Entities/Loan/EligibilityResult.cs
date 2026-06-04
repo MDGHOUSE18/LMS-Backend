@@ -8,8 +8,8 @@ namespace LMS.Domain.Entities.Loan
 {
     public class EligibilityResult
     {
-        public int Id { get; set; }
-        public int LoanApplicationId { get; set; }
+        public Guid Id { get; set; }
+        public Guid LoanApplicationId { get; set; }
         public bool IsEligible { get; set; }
         public int? Age { get; set; }
         public decimal? MonthlyIncome { get; set; }

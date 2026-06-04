@@ -12,8 +12,7 @@ namespace LMS.Domain.Entities.Audit
     public class AuditLog
     {
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public long LogId { get; set; }
+        public Guid LogId { get; set; }
 
         [Required]
         [MaxLength(50)]

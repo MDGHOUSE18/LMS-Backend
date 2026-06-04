@@ -14,7 +14,7 @@ namespace LMS.Application.Interfaces.Services
 
         Task<AuthResponseDto> RefreshTokenAsync(string refreshToken, string ipAddress);
 
-        Task LogoutAsync(int userId);
+        Task LogoutAsync(Guid userId);
 
         Task<string> RegisterAsync(RegisterRequestDto request);
         Task<string> ResendVerificationEmailAsync(string email);

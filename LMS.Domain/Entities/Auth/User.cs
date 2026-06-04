@@ -15,7 +15,7 @@ namespace LMS.Domain.Entities.Auth
         public string PasswordHash { get; set; } = default!;
         public DateTime? DateOfBirth { get; set; } // BRD requirement for age validation
         public string? PanNumber { get; set; } // BRD requirement
-        public Guid RoleId { get; set; }
+        public int RoleId { get; set; }
         public bool IsActive { get; set; } 
         public DateTime CreatedAt { get; set; } 
         public DateTime? LastModifiedAt { get; set; }

@@ -11,8 +11,8 @@ namespace LMS.Application.Interfaces.Services
     public interface IOtpService
     {
         Task<string> GenerateOtpAsync(User user, OtpPurpose purpose);
-        Task<int?> GetOtpAttemptsAsync(int userId, OtpPurpose login);
+        Task<int?> GetOtpAttemptsAsync(Guid userId, OtpPurpose login);
         Task<bool> VerifyOtpAsync(User user, string otp, OtpPurpose purpose);
-        Task<OtpRequest> GetActiveOtpAsync(int userId, OtpPurpose purpose);
+        Task<OtpRequest?> GetActiveOtpAsync(Guid userId, OtpPurpose purpose);
     }
 }

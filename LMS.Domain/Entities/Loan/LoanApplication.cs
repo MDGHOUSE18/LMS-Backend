@@ -242,7 +242,7 @@ namespace LMS.Domain.Entities.Loan
         {
             var result = new EligibilityResult
             {
-                LoanApplicationId = (int)Id.GetHashCode(), // Temporary mapping
+                LoanApplicationId = Id,
                 EvaluatedAt = DateTime.UtcNow
             };
 
@@ -443,9 +443,9 @@ namespace LMS.Domain.Entities.Loan
             // Note: In real implementation, you'd map LoanStatusEnum to LoanStatus entity IDs
             var history = new LoanStatusHistory
             {
-                LoanApplicationId = (int)Id.GetHashCode(), // Temporary mapping
+                LoanApplicationId = Id,
                 ToStatusId = (int)toStatus,
-                ChangedBy = (int)changedBy.GetHashCode(), // Temporary mapping
+                ChangedBy = changedBy,
                 ChangedAt = DateTime.UtcNow,
                 Comments = comments
             };

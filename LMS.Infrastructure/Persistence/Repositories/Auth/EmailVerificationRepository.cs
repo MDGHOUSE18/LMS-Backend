@@ -30,7 +30,7 @@ namespace LMS.Infrastructure.Persistence.Repositories.Auth
                 .FirstOrDefaultAsync();
         }
 
-        public async Task InvalidateOldTokensAsync(int userId)
+        public async Task InvalidateOldTokensAsync(Guid userId)
         {
             var tokens = await _dbContext.EmailVerificationTokens
                 .Where(t => t.UserId == userId && !t.IsUsed)

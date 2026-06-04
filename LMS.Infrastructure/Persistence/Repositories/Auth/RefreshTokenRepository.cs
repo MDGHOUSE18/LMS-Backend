@@ -31,33 +31,22 @@ namespace LMS.Infrastructure.Persistence.Repositories.Auth
 
         public async Task RevokeTokenAsync(UserRefreshToken token)
         {
-            _dbContext.UserRefreshTokens.Update(token);
+            _dbContext.UserRefreshTokens.Remove(token);
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task RevokeUserTokensAsync(int userId)
+        public async Task RevokeUserTokensAsync(Guid userId)
         {
-            var tokens =await _dbContext.UserRefreshTokens
-                            .Where(rt => rt.UserId == userId && !rt.IsRevoked)
-                            .ToListAsync();
-            if (tokens == null)
+            var tokens = await _dbContext.UserRefreshTokens
+                .Where(rt => rt.UserId == userId && rt.ExpiryDate > DateTime.UtcNow)
+                .ToListAsync();
+
+            if (tokens.Count == 0)
             {
                 return;
             }
-            foreach (var token in tokens)
-            {
-                token.IsRevoked = true;
-                token.RevokedAt=DateTime.UtcNow;
-            }
-            var userHistory = await _dbContext.UserLoginHistories
-                                .Where(h => h.UserId == userId)
-                                .OrderByDescending(h => h.LoginTime)
-                                .FirstOrDefaultAsync();
-            if (userHistory ==null)
-            {
-                return;
-            }
-            userHistory.LogoutTime = DateTime.UtcNow;
+
+            _dbContext.UserRefreshTokens.RemoveRange(tokens);
             await _dbContext.SaveChangesAsync();
         }
     }

@@ -13,7 +13,7 @@ namespace LMS.Application.Interfaces.Repositories
 
         Task<UserRefreshToken?> GetByTokenHashAsync(string tokenHash);
 
-        Task RevokeUserTokensAsync(int userId);
+        Task RevokeUserTokensAsync(Guid userId);
 
         Task RevokeTokenAsync(UserRefreshToken token);
     }

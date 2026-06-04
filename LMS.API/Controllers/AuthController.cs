@@ -124,14 +124,10 @@ namespace LMS.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Logout()
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)
+                ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub);
 
-            if (userIdClaim == null)
-            {
-                return Unauthorized();
-            }
-            int userId = int.Parse(userIdClaim.Value);
-            if (userId==0)
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
             {
                 return Unauthorized(new ApiResponse<object>
                 {
