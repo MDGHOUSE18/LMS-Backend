@@ -1,5 +1,6 @@
 using LMS.Application.DTOs.Dashboard;
 using LMS.Application.Interfaces.Services.Loan;
+using LMS.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -57,13 +58,13 @@ namespace LMS.API.Controllers
                 {
                     var payments = await _paymentScheduleService.GetScheduleAsync(loan.Id);
                     var outstanding = payments
-                        .Where(p => p.Status != Domain.Entities.Loan.PaymentStatus.Paid)
+                        .Where(p => p.Status != PaymentStatus.Paid)
                         .Sum(p => p.PrincipalPart);
                     
                     totalOutstanding += outstanding;
 
                     var nextPayment = payments
-                        .Where(p => p.Status == Domain.Entities.Loan.PaymentStatus.Pending)
+                        .Where(p => p.Status == PaymentStatus.Pending)
                         .OrderBy(p => p.DueDate)
                         .FirstOrDefault();
 

@@ -1,16 +1,16 @@
 ﻿using LMS.Domain.Entities.Loan;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace LMS.Application.Interfaces.Repositories.Loan
 {
-    public interface ILoanRepository
+    public interface ILoanRepository : IRepository<LoanApplication>
     {
-        Task<LoanApplication> CreateAsync(LoanApplication loan);
         Task<LoanApplication?> GetByIdAsync(int id);
-        Task UpdateAsync(LoanApplication loan);
+        Task<List<LoanApplication>> GetByUserIdAsync(Guid userId);
+        Task<List<LoanApplication>> GetPendingApplicationsAsync();
+        Task<List<LoanApplication>> GetAllLoansAsync();
+        Task<bool> ExistsRecentApplicationAsync(Guid userId, DateTime sinceDate);
     }
 }

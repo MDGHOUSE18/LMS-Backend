@@ -51,33 +51,22 @@ namespace LMS.Application.Services.Loan
             // 2. GET CURRENT USER
             var userId = _currentUserService.UserId;
 
-            // 3. CREATE LOAN
-            var loan = new LoanApplication
-            {
-                UserId = userId,
-                StatusId = LoanStatusConstants.Draft,
-                PurposeId = request.PurposeId,
-                EmploymentTypeId = request.EmploymentTypeId,
+            // 3. CREATE LOAN using factory method
+            var loan = LoanApplication.Create(
+                userId: userId,
+                createdBy: userId,
+                loanAmount: request.LoanAmount,
+                tenureMonths: request.TenureMonths,
+                interestRate: request.InterestRate ?? 12.0m,
+                monthlyIncome: request.MonthlyIncome,
+                existingEMI: request.ExistingEMI,
+                purpose: request.Purpose,
+                employmentType: request.EmploymentType ?? "Salaried"
+            );
 
-                CreatedAt = DateTime.UtcNow,
-                CreatedBy = userId
-            };
+            var createdLoan = await _loanRepository.AddAsync(loan);
 
-            var createdLoan = await _loanRepository.CreateAsync(loan);
-
-            // 4. CREATE FINANCIAL DETAILS
-            var financial = new LoanFinancialDetails
-            {
-                LoanApplicationId = createdLoan.Id,
-                LoanAmount = request.LoanAmount,
-                TenureMonths = request.TenureMonths,
-                MonthlyIncome = request.MonthlyIncome,
-                ExistingEMI = request.ExistingEMI
-            };
-
-            await _financialRepitory.AddAsync(financial);
-
-            // 5. AUDIT
+            // 4. AUDIT
             await _auditService.LogAsync(
                 "LoanApplication",
                 createdLoan.Id,
@@ -89,14 +78,56 @@ namespace LMS.Application.Services.Loan
             return createdLoan.Id;
         }
 
-        public Task SubmitLoanAsync(int loanId)
+        public async Task SubmitLoanAsync(int loanId)
         {
-            throw new NotImplementedException();
+            var loan = await _loanRepository.GetByIdAsync(loanId);
+            if (loan == null)
+                throw new ArgumentException("Loan not found", nameof(loanId));
+
+            var userId = _currentUserService.UserId;
+            
+            // Check eligibility before submission
+            loan.CheckEligibility();
+            
+            // Submit the loan
+            loan.Submit(userId);
+
+            await _loanRepository.UnitOfWork.SaveChangesAsync();
+            
+            await _auditService.LogAsync(
+                "LoanApplication",
+                loan.Id,
+                "SUBMIT",
+                null,
+                loan
+            );
         }
 
-        public Task UpdateDraftAsync(UpdateLoanRequest request)
+        public async Task UpdateDraftAsync(UpdateLoanRequest request)
         {
-            throw new NotImplementedException();
+            var loan = await _loanRepository.GetByIdAsync(request.LoanId);
+            if (loan == null)
+                throw new ArgumentException("Loan not found", nameof(request.LoanId));
+
+            if (loan.Status != Domain.Enums.LoanStatusEnum.Draft)
+                throw new InvalidOperationException("Only draft loans can be updated");
+
+            // Update financial details through domain method or direct property access
+            // Note: In rich domain model, we should use a domain method
+            var userId = _currentUserService.UserId;
+            
+            // Recalculate EMI with new values
+            loan.CalculateAndStoreEMI();
+            
+            await _loanRepository.UnitOfWork.SaveChangesAsync();
+            
+            await _auditService.LogAsync(
+                "LoanApplication",
+                loan.Id,
+                "UPDATE_DRAFT",
+                null,
+                loan
+            );
         }
     }
 }

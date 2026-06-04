@@ -4,16 +4,52 @@ using LMS.Domain.Entities.Loan;
 using LMS.Domain.Entities.Lookup;
 using LMS.Domain.Entities.Workflow;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
+using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LMS.Infrastructure.Persistence.Context
 {
     public class LMSDbContext : DbContext, IUnitOfWork
     {
-        public LMSDbContext(DbContextOptions<LMSDbContext> options) : base(options) { }
+        private readonly IHttpContextAccessor? _httpContextAccessor;
+        private readonly string? _currentUserId;
+        private readonly string? _currentUserIpAddress;
+
+        public LMSDbContext(DbContextOptions<LMSDbContext> options) 
+            : this(options, null, null, null) { }
+
+        public LMSDbContext(
+            DbContextOptions<LMSDbContext> options,
+            IHttpContextAccessor? httpContextAccessor = null,
+            string? currentUserId = null,
+            string? currentUserIpAddress = null) 
+            : base(options)
+        {
+            _httpContextAccessor = httpContextAccessor;
+            _currentUserId = currentUserId;
+            _currentUserIpAddress = currentUserIpAddress;
+
+            // Try to extract user info from HttpContext if available
+            if (_httpContextAccessor?.HttpContext?.User != null)
+            {
+                var claimsPrincipal = _httpContextAccessor.HttpContext.User;
+                if (string.IsNullOrEmpty(_currentUserId))
+                {
+                    _currentUserId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+                        ?? claimsPrincipal.FindFirst("userId")?.Value;
+                }
+                if (string.IsNullOrEmpty(_currentUserIpAddress))
+                {
+                    _currentUserIpAddress = _httpContextAccessor.HttpContext.Connection.RemoteIpAddress?.ToString();
+                }
+            }
+        }
 
         // ==================== DBO SCHEMA ====================
         public DbSet<User> Users { get; set; } = null!;
@@ -44,18 +80,7 @@ namespace LMS.Infrastructure.Persistence.Context
         // ==================== AUDIT SCHEMA ====================
         public DbSet<AuditLog> AuditLogs { get; set; } = null!;
 
-        public DbSet<User> Users { get; set; }
-        public DbSet<Role> Roles { get; set; }
-        public DbSet<UserLoginHistory> UserLoginHistory { get; set; }
-        public DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
-        public DbSet<OtpRequest> OtpRequests { get; set; }
-        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
-        public DbSet<EmailVerificationToken> EmailVerificationTokens { get; set; }
-        public DbSet<LoanApplication> LoanApplications { get; set; }
-        public DbSet<LoanFinancialDetails> LoanFinancialDetails { get; set; }
-        public DbSet<Document> Documents { get; set; }
-        public DbSet<Payment> Payments { get; set; }
-        public DbSet<AuditLog> AuditLogs { get; set; }
+        public DbSet<Payment> Payments { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -251,9 +276,160 @@ namespace LMS.Infrastructure.Persistence.Context
                 .OnDelete(DeleteBehavior.Restrict);
         }
 
-        public async Task<int> SaveChangesAsync()
+        /// <summary>
+        /// Overrides SaveChangesAsync to automatically capture audit logs for all entity changes.
+        /// Complies with RBI's 10-year retention requirement by logging Create, Update, and Delete operations.
+        /// </summary>
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            return await base.SaveChangesAsync();
+            var auditLogs = new List<AuditLog>();
+            var currentUserId = GetCurrentUserId();
+            var ipAddress = GetCurrentUserIpAddress();
+            var timestamp = DateTime.UtcNow;
+
+            // Detect all changes using ChangeTracker
+            var entries = ChangeTracker.Entries()
+                .Where(e => e.Entity is not AuditLog && 
+                           (e.State == EntityState.Added || 
+                            e.State == EntityState.Modified || 
+                            e.State == EntityState.Deleted))
+                .ToList();
+
+            foreach (var entry in entries)
+            {
+                var entityType = entry.Entity.GetType().Name;
+                var entityId = GetEntityId(entry.Entity);
+                
+                if (string.IsNullOrEmpty(entityId))
+                {
+                    continue; // Skip entities without a valid ID
+                }
+
+                var auditLog = new AuditLog
+                {
+                    UserId = currentUserId ?? "SYSTEM",
+                    Action = entry.State.ToString(),
+                    EntityType = entityType,
+                    EntityId = entityId,
+                    Timestamp = timestamp,
+                    IpAddress = ipAddress,
+                    Details = SerializeAuditDetails(entry)
+                };
+
+                auditLogs.Add(auditLog);
+            }
+
+            // Add all audit logs before saving changes
+            if (auditLogs.Any())
+            {
+                await AuditLogs.AddRangeAsync(auditLogs, cancellationToken);
+            }
+
+            return await base.SaveChangesAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Gets the current user ID from HttpContext, constructor parameter, or defaults to SYSTEM.
+        /// </summary>
+        private string? GetCurrentUserId()
+        {
+            if (!string.IsNullOrEmpty(_currentUserId))
+            {
+                return _currentUserId;
+            }
+
+            if (_httpContextAccessor?.HttpContext?.User != null)
+            {
+                var claimsPrincipal = _httpContextAccessor.HttpContext.User;
+                return claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+                    ?? claimsPrincipal.FindFirst("userId")?.Value;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the current user's IP address from HttpContext or constructor parameter.
+        /// </summary>
+        private string? GetCurrentUserIpAddress()
+        {
+            if (!string.IsNullOrEmpty(_currentUserIpAddress))
+            {
+                return _currentUserIpAddress;
+            }
+
+            return _httpContextAccessor?.HttpContext?.Connection?.RemoteIpAddress?.ToString();
+        }
+
+        /// <summary>
+        /// Extracts the primary key value from an entity as a string.
+        /// </summary>
+        private string GetEntityId(object entity)
+        {
+            var keyProperties = Entry(entity).Metadata.FindPrimaryKey()?.Properties;
+            
+            if (keyProperties == null || !keyProperties.Any())
+            {
+                return string.Empty;
+            }
+
+            var keyValues = keyProperties
+                .Select(p => Entry(entity).Property(p.Name).CurrentValue)
+                .Where(v => v != null)
+                .Select(v => v!.ToString());
+
+            return string.Join("-", keyValues);
+        }
+
+        /// <summary>
+        /// Serializes entity changes into a JSON payload for audit storage.
+        /// Includes BeforeData (original values) and AfterData (new/modified values).
+        /// </summary>
+        private string SerializeAuditDetails(EntityEntry entry)
+        {
+            var details = new
+            {
+                BeforeData = entry.State == EntityState.Modified || entry.State == EntityState.Deleted
+                    ? CaptureOriginalValues(entry)
+                    : null,
+                AfterData = entry.State == EntityState.Added || entry.State == EntityState.Modified
+                    ? CaptureCurrentValues(entry)
+                    : null,
+                ModifiedProperties = entry.State == EntityState.Modified
+                    ? entry.Properties
+                        .Where(p => p.IsModified)
+                        .Select(p => p.Metadata.Name)
+                        .ToArray()
+                    : null
+            };
+
+            return JsonSerializer.Serialize(details, new JsonSerializerOptions
+            {
+                WriteIndented = false,
+                ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
+            });
+        }
+
+        /// <summary>
+        /// Captures original property values before modification/deletion.
+        /// </summary>
+        private Dictionary<string, object?> CaptureOriginalValues(EntityEntry entry)
+        {
+            return entry.Properties
+                .ToDictionary(
+                    p => p.Metadata.Name,
+                    p => p.OriginalValue);
+        }
+
+        /// <summary>
+        /// Captures current property values after addition/modification.
+        /// </summary>
+        private Dictionary<string, object?> CaptureCurrentValues(EntityEntry entry)
+        {
+            return entry.Properties
+                .ToDictionary(
+                    p => p.Metadata.Name,
+                    p => p.CurrentValue);
         }
     }
 }

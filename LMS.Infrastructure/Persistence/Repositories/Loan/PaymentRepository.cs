@@ -1,5 +1,6 @@
 using LMS.Application.Interfaces.Repositories.Loan;
 using LMS.Domain.Entities.Loan;
+using LMS.Domain.Enums;
 using LMS.Infrastructure.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
 using System;
