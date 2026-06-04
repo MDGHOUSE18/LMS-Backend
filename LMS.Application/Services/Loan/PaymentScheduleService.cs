@@ -1,5 +1,6 @@
 using LMS.Application.Interfaces.Services.Loan;
 using LMS.Domain.Entities.Loan;
+using LMS.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
