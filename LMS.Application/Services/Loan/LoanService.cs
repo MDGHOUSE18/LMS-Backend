@@ -1,6 +1,7 @@
 ﻿using LMS.Application.Common.Constants;
 using LMS.Application.DTOs.Loan;
 using LMS.Application.Interfaces.Common;
+using LMS.Application.Interfaces.Repositories;
 using LMS.Application.Interfaces.Repositories.Loan;
 using LMS.Application.Interfaces.Services.Loan;
 using LMS.Domain.Entities.Loan;
@@ -20,13 +21,15 @@ namespace LMS.Application.Services.Loan
         private readonly IAuditService _auditService;
         private readonly ICurrentUserService _currentUserService;
         private readonly ILoanFinancialRepository _financialRepitory;
+        private readonly IUserRepository _userRepository;
 
         public LoanService(
         ILoanRepository loanRepo,
         IWorkflowService workflow,
         IEligibilityService eligibility,
         IAuditService audit,ICurrentUserService currentUserService,
-        ILoanFinancialRepository loanFinancialRepository)
+        ILoanFinancialRepository loanFinancialRepository,
+        IUserRepository userRepository)
         {
             _loanRepository = loanRepo;
             _workflowService = workflow;
@@ -34,6 +37,7 @@ namespace LMS.Application.Services.Loan
             _auditService = audit;
             _currentUserService = currentUserService;
             _financialRepitory = loanFinancialRepository;
+            _userRepository = userRepository;
         }
 
         public async Task<Guid> CreateDraftAsync(CreateLoanRequest request)
@@ -66,6 +70,18 @@ namespace LMS.Application.Services.Loan
 
             var createdLoan = await _loanRepository.AddAsync(loan);
 
+            await _financialRepitory.AddAsync(new LoanFinancialDetails
+            {
+                Id = Guid.NewGuid(),
+                LoanApplicationId = createdLoan.Id,
+                LoanAmount = request.LoanAmount,
+                TenureMonths = request.TenureMonths,
+                InterestRate = 12.0m,
+                Emi = createdLoan.CalculatedEMI ?? 0,
+                MonthlyIncome = request.MonthlyIncome,
+                ExistingEMI = request.ExistingEMI
+            });
+
             // 4. AUDIT
             await _auditService.LogAsync(
                 "LoanApplication",
@@ -85,9 +101,30 @@ namespace LMS.Application.Services.Loan
                 throw new ArgumentException("Loan not found", nameof(loanId));
 
             var userId = _currentUserService.GetCurrentUserId();
-            
-            // Submit the loan
+            var user = await _userRepository.GetByIdAsync(loan.UserId);
+            if (user == null)
+                throw new InvalidOperationException("Loan applicant not found");
+
+            var financialDetails = await _financialRepitory.GetByLoanIdAsync(loan.Id);
+            if (financialDetails == null)
+                throw new InvalidOperationException("Loan financial details not found");
+
             loan.Submit(userId);
+
+            var eligibility = await _eligibilityService.EvaluateAsync(
+                loan.Id,
+                user,
+                loan,
+                financialDetails);
+
+            if (!eligibility.IsEligible)
+            {
+                loan.Reject(userId, eligibility.RejectionReason ?? "Loan failed eligibility checks");
+            }
+            else
+            {
+                loan.MoveToUnderReview(userId, "Eligibility checks passed");
+            }
 
             _loanRepository.Update(loan);
             

@@ -10,16 +10,7 @@ using System.Threading.Tasks;
 
 namespace LMS.Application.Services.Loan
 {
-    public interface IDocumentService
-    {
-        Task<Document> UploadDocumentAsync(Guid loanId, Guid userId, DocumentType type, IFormFile file);
-        Task<List<Document>> GetDocumentsByLoanIdAsync(Guid loanId);
-        Task<Document> VerifyDocumentAsync(Guid documentId, Guid verifiedByUserId, bool isApproved, string? rejectionReason = null);
-        Task<List<Document>> GetPendingVerificationAsync();
-        Task<bool> AreAllDocumentsVerifiedAsync(Guid loanId);
-    }
-
-    public class DocumentService : IDocumentService
+    public class DocumentService : LMS.Application.Interfaces.Services.Loan.IDocumentService
     {
         private readonly IDocumentRepository _documentRepository;
         private readonly ILoanRepository _loanRepository;
@@ -80,6 +71,11 @@ namespace LMS.Application.Services.Loan
         public async Task<List<Document>> GetDocumentsByLoanIdAsync(Guid loanId)
         {
             return await _documentRepository.GetByLoanIdAsync(loanId);
+        }
+
+        public async Task<Document?> GetByIdAsync(Guid id)
+        {
+            return await _documentRepository.GetByIdAsync(id);
         }
 
         public async Task<Document> VerifyDocumentAsync(Guid documentId, Guid verifiedByUserId, bool isApproved, string? rejectionReason = null)

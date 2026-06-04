@@ -121,9 +121,21 @@ namespace LMS.API.Controllers
         {
             try
             {
-                // Note: Need to add GetById method to service or fetch from list
-                var documents = await _documentService.GetDocumentsByLoanIdAsync(Guid.Empty); // This needs improvement
-                return Ok(new { message = "Get by ID needs implementation" });
+                var document = await _documentService.GetByIdAsync(id);
+                if (document == null)
+                    return NotFound(new { message = "Document not found" });
+
+                var response = new DocumentUploadResponse
+                {
+                    DocumentId = document.Id,
+                    DocumentType = document.Type.ToString(),
+                    FileName = document.FileName,
+                    FileSize = document.FileSize,
+                    VerificationStatus = document.VerificationStatus.ToString(),
+                    UploadedAt = document.UploadedAt
+                };
+
+                return Ok(response);
             }
             catch (Exception ex)
             {

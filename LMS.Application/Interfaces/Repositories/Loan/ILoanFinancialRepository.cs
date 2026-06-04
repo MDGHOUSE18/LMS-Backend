@@ -10,5 +10,6 @@ namespace LMS.Application.Interfaces.Repositories.Loan
     public interface ILoanFinancialRepository
     {
         Task AddAsync(LoanFinancialDetails details);
+        Task<LoanFinancialDetails?> GetByLoanIdAsync(Guid loanId);
     }
 }

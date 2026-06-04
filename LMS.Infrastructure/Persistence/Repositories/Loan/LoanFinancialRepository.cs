@@ -22,5 +22,11 @@ namespace LMS.Infrastructure.Persistence.Repositories.Loan
             _dbContext.LoanFinancialDetails.Add(details);
             await _dbContext.SaveChangesAsync();
         }
+
+        public async Task<LoanFinancialDetails?> GetByLoanIdAsync(Guid loanId)
+        {
+            return await _dbContext.LoanFinancialDetails
+                .FirstOrDefaultAsync(x => x.LoanApplicationId == loanId);
+        }
     }
 }

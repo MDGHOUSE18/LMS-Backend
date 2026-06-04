@@ -55,10 +55,12 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<ILoanFinancialRepository, LoanFinancialRepository>();
 builder.Services.AddScoped<ILoanRepository, LoanRepository>();
+builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 builder.Services.AddScoped<IWorkflowService, WorkflowService>();
 builder.Services.AddScoped<IEligibilityService, EligibilityService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<ILoanService, LoanService>();
+builder.Services.AddScoped<IDocumentService, DocumentService>();
 
 
 builder.Services.AddControllers();
@@ -136,7 +138,6 @@ builder.Services.AddSwaggerGen(c =>
 });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
@@ -165,6 +166,7 @@ app.UseHttpsRedirection();
 // ? ADD CORS USAGE (BEFORE UseAuthentication)
 app.UseCors("AllowUI");
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

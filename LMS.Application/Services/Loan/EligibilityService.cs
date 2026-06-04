@@ -17,11 +17,6 @@ namespace LMS.Application.Services.Loan
         private const decimal MAX_DEBT_TO_INCOME_RATIO = 0.50m; // 50%
         private const decimal MAX_LOAN_TO_INCOME_RATIO = 20; // 20x monthly income
         
-        public async Task EvaluateAsync(int loanId)
-        {
-            throw new NotImplementedException("This method signature needs to be updated to use Guid");
-        }
-
         public async Task<EligibilityResult> EvaluateAsync(Guid loanId, User user, LoanApplication loan, LoanFinancialDetails financialDetails)
         {
             var result = new EligibilityResult
