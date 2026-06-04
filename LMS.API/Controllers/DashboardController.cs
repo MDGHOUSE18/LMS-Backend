@@ -1,10 +1,9 @@
 using LMS.Application.DTOs.Dashboard;
+using LMS.Application.Interfaces.Common;
 using LMS.Application.Interfaces.Services.Loan;
 using LMS.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-
 namespace LMS.API.Controllers
 {
     [ApiController]
@@ -45,8 +44,8 @@ namespace LMS.API.Controllers
                 var dashboard = new CustomerDashboardResponse
                 {
                     TotalApplicationsCount = loans.Count(),
-                    ApprovedCount = loans.Count(l => l.Status == "Approved" || l.Status == "Disbursed"),
-                    RejectedCount = loans.Count(l => l.Status == "Rejected"),
+                    ApprovedCount = loans.Count(l => l.Status == LoanStatusEnum.Approved || l.Status == LoanStatusEnum.Disbursed),
+                    RejectedCount = loans.Count(l => l.Status == LoanStatusEnum.Rejected),
                     ActiveLoans = new List<LoanSummary>(),
                     NextEmiAmount = 0,
                     NextEmiDueDate = null
@@ -54,17 +53,17 @@ namespace LMS.API.Controllers
 
                 decimal totalOutstanding = 0;
 
-                foreach (var loan in loans.Where(l => l.Status == "Disbursed"))
+                foreach (var loan in loans.Where(l => l.Status == LoanStatusEnum.Disbursed))
                 {
                     var payments = await _paymentScheduleService.GetScheduleAsync(loan.Id);
                     var outstanding = payments
-                        .Where(p => p.Status != PaymentStatus.Paid)
+                        .Where(p => p.Status != PaymentStatus.Paid.ToString())
                         .Sum(p => p.PrincipalPart);
                     
                     totalOutstanding += outstanding;
 
                     var nextPayment = payments
-                        .Where(p => p.Status == PaymentStatus.Pending)
+                        .Where(p => p.Status == PaymentStatus.Pending.ToString())
                         .OrderBy(p => p.DueDate)
                         .FirstOrDefault();
 
@@ -74,8 +73,8 @@ namespace LMS.API.Controllers
                         ApplicationNumber = $"LMS{loan.Id.ToString().Substring(0, 8).ToUpper()}",
                         LoanAmount = loan.FinancialDetails?.LoanAmount ?? 0,
                         OutstandingBalance = outstanding,
-                        MonthlyEMI = loan.FinancialDetails?.CalculatedEmi ?? 0,
-                        Status = loan.Status,
+                        MonthlyEMI = loan.CalculatedEMI ?? 0,
+                        Status = loan.Status.ToString(),
                         AppliedDate = loan.CreatedAt,
                         NextDueDate = nextPayment?.DueDate
                     });
@@ -99,8 +98,8 @@ namespace LMS.API.Controllers
                         ApplicationNumber = $"LMS{latestLoan.Id.ToString().Substring(0, 8).ToUpper()}",
                         LoanAmount = latestLoan.FinancialDetails?.LoanAmount ?? 0,
                         OutstandingBalance = 0,
-                        MonthlyEMI = latestLoan.FinancialDetails?.CalculatedEmi ?? 0,
-                        Status = latestLoan.Status,
+                        MonthlyEMI = latestLoan.CalculatedEMI ?? 0,
+                        Status = latestLoan.Status.ToString(),
                         AppliedDate = latestLoan.CreatedAt
                     };
                 }
@@ -148,16 +147,16 @@ namespace LMS.API.Controllers
                         CustomerName = "Customer Name", // Need to join with User entity
                         LoanAmount = loan.FinancialDetails?.LoanAmount ?? 0,
                         AppliedDate = loan.CreatedAt,
-                        Status = loan.Status,
+                        Status = loan.Status.ToString(),
                         DaysPending = daysPending,
-                        HasEligibilityFlags = loan.EligibilityFlags?.Any() ?? false
+                        HasEligibilityFlags = false
                     });
                 }
 
                 // Get portfolio metrics
                 var allLoans = await _loanService.GetAllLoansAsync();
-                var approvedLoans = allLoans.Where(l => l.Status == "Approved" || l.Status == "Disbursed").ToList();
-                var rejectedLoans = allLoans.Where(l => l.Status == "Rejected").ToList();
+                var approvedLoans = allLoans.Where(l => l.Status == LoanStatusEnum.Approved || l.Status == LoanStatusEnum.Disbursed).ToList();
+                var rejectedLoans = allLoans.Where(l => l.Status == LoanStatusEnum.Rejected).ToList();
 
                 dashboard.Portfolio.TotalApprovedLoans = approvedLoans.Count;
                 dashboard.Portfolio.TotalRejectedLoans = rejectedLoans.Count;
@@ -169,8 +168,8 @@ namespace LMS.API.Controllers
                 var processedLoans = allLoans.Where(l => l.ApprovedDate.HasValue || l.RejectedDate.HasValue).ToList();
                 if (processedLoans.Any())
                 {
-                    var avgDays = processedLoans.Average(l => 
-                        (l.ApprovedDate ?? l.RejectedDate ?? DateTime.UtcNow) - l.CreatedAt).TotalDays;
+                    var avgDays = processedLoans.Average(l =>
+                        ((l.ApprovedDate ?? l.RejectedDate ?? DateTime.UtcNow) - l.CreatedAt).TotalDays);
                     dashboard.Portfolio.AverageProcessingTimeDays = avgDays;
                 }
 

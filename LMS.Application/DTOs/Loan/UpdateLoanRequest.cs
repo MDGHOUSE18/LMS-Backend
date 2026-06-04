@@ -8,6 +8,6 @@ namespace LMS.Application.DTOs.Loan
 {
     public class UpdateLoanRequest : CreateLoanRequest
     {
-        public int LoanId { get; set; }
+        public Guid LoanId { get; set; }
     }
 }

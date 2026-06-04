@@ -1,4 +1,4 @@
-﻿using LMS.Application.Interfaces.Repositories;
+﻿
 using LMS.Application.Interfaces.Repositories.Loan;
 using LMS.Domain.Entities.Loan;
 using LMS.Domain.Enums;
@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace LMS.Infrastructure.Persistence.Repositories.Loan
@@ -14,7 +15,7 @@ namespace LMS.Infrastructure.Persistence.Repositories.Loan
     public class LoanRepository : ILoanRepository
     {
         private readonly LMSDbContext _dbContext;
-        
+
         public LoanRepository(LMSDbContext dbContext)
         {
             _dbContext = dbContext;
@@ -28,13 +29,6 @@ namespace LMS.Infrastructure.Persistence.Repositories.Loan
                 .FirstOrDefaultAsync(l => l.Id == id);
         }
 
-        public async Task<LoanApplication?> GetByIdAsync(int id)
-        {
-            return await _dbContext.LoanApplications
-                .Include(l => l.FinancialDetails)
-                .FirstOrDefaultAsync(l => l.Id == id);
-        }
-
         public async Task<IEnumerable<LoanApplication>> GetAllAsync()
         {
             return await _dbContext.LoanApplications
@@ -42,7 +36,7 @@ namespace LMS.Infrastructure.Persistence.Repositories.Loan
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<LoanApplication>> FindAsync(System.Linq.Expressions.Expression<Func<LoanApplication, bool>> predicate)
+        public async Task<IEnumerable<LoanApplication>> FindAsync(Expression<Func<LoanApplication, bool>> predicate)
         {
             return await _dbContext.LoanApplications
                 .Include(l => l.FinancialDetails)
@@ -60,16 +54,19 @@ namespace LMS.Infrastructure.Persistence.Repositories.Loan
         public void Update(LoanApplication entity)
         {
             _dbContext.LoanApplications.Update(entity);
+            _dbContext.SaveChanges();
         }
 
         public void Remove(LoanApplication entity)
         {
             _dbContext.LoanApplications.Remove(entity);
+            _dbContext.SaveChanges();
         }
 
         public void RemoveRange(IEnumerable<LoanApplication> entities)
         {
             _dbContext.LoanApplications.RemoveRange(entities);
+            _dbContext.SaveChanges();
         }
 
         public async Task<bool> ExistsAsync(Guid id)
@@ -82,7 +79,7 @@ namespace LMS.Infrastructure.Persistence.Repositories.Loan
             return await _dbContext.LoanApplications.CountAsync();
         }
 
-        public async Task<int> CountAsync(System.Linq.Expressions.Expression<Func<LoanApplication, bool>> predicate)
+        public async Task<int> CountAsync(Expression<Func<LoanApplication, bool>> predicate)
         {
             return await _dbContext.LoanApplications.CountAsync(predicate);
         }
@@ -117,7 +114,5 @@ namespace LMS.Infrastructure.Persistence.Repositories.Loan
             return await _dbContext.LoanApplications
                 .AnyAsync(l => l.UserId == userId && l.CreatedAt >= sinceDate);
         }
-
-        public IUnitOfWork UnitOfWork => _dbContext;
     }
 }

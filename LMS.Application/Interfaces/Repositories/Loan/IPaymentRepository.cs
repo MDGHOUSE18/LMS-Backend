@@ -10,5 +10,7 @@ namespace LMS.Application.Interfaces.Repositories.Loan
         Task<List<Payment>> GetByLoanIdAsync(Guid loanId);
         Task<List<Payment>> GetOverduePaymentsAsync(DateTime asOfDate);
         Task<List<Payment>> GetUpcomingPaymentsAsync(DateTime fromDate, DateTime toDate);
+        void Add(Payment entity);
+        void Delete(Payment entity);
     }
 }

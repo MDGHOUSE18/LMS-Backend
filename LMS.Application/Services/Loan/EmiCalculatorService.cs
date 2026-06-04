@@ -70,7 +70,7 @@ namespace LMS.Application.Services.Loan
                 if (month == tenureMonths)
                 {
                     principalPart = remainingPrincipal;
-                    emi = (double)principalPart + interestPart;
+                    emi = (decimal)(principalPart + interestPart);
                 }
                 
                 remainingPrincipal -= principalPart;

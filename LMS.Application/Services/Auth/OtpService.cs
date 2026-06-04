@@ -34,7 +34,7 @@ namespace LMS.Application.Services.Auth
             var hashedOtp = HashOtp(otp);
             OtpRequest otpRequest = new OtpRequest
             {
-                UserId = user.Id,
+                UserId = ToLegacyInt(user.Id),
                 Purpose = OtpPurpose.Login.ToString(),
                 OTPHash = hashedOtp,
                 MobileNumber = user.Mobile,
@@ -57,7 +57,7 @@ namespace LMS.Application.Services.Auth
         }
         public async Task<bool> VerifyOtpAsync(User user, string otp, OtpPurpose purpose)
         {
-            var otpRequest = await _otpRepository.GetActiveOtpAsync(user.Id, purpose);
+            var otpRequest = await _otpRepository.GetActiveOtpAsync(ToLegacyInt(user.Id), purpose);
             if (otpRequest==null)
             {
                 throw new Exception("OTP has expired. Please request a new OTP.");
@@ -140,6 +140,12 @@ namespace LMS.Application.Services.Auth
             int maskedLength = mobile.Length - visibleDigits;
 
             return new string('*', maskedLength) + mobile.Substring(maskedLength);
+        }
+
+        private static int ToLegacyInt(Guid id)
+        {
+            var bytes = id.ToByteArray();
+            return Math.Abs(BitConverter.ToInt32(bytes, 0));
         }
 
        

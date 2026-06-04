@@ -25,6 +25,11 @@ namespace LMS.Application.Services.Common
                 ? id
                 : 0;
 
+        public Guid GetCurrentUserId() =>
+            Guid.TryParse(User?.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var id)
+                ? id
+                : Guid.Empty;
+
         public string Email =>
             User?.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty;
 

@@ -1,3 +1,4 @@
+using LMS.Domain.Entities.Auth;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +19,7 @@ namespace LMS.Domain.Entities.Loan
         public long FileSize { get; set; } // in bytes
         public string ContentType { get; set; } // application/pdf, image/jpeg
         
-        public string VerificationStatus { get; set; } // Pending, Verified, Rejected
+        public int VerificationStatus { get; set; } // Pending, Verified, Rejected
         public string? RejectionReason { get; set; }
         
         public DateTime UploadedAt { get; set; }

@@ -22,9 +22,9 @@ namespace LMS.Application.Services.Loan
             _correlationId = correlationId;
         }
 
-        public async Task LogAsync(string entity, int entityId, string action, object? before, object? after)
+        public async Task LogAsync(string entity, Guid entityId, string action, object? before, object? after)
         {
-            throw new NotImplementedException("This method signature needs to be updated to use Guid");
+            await LogAsync(entity, entityId, action, before, after, null);
         }
 
         /// <summary>

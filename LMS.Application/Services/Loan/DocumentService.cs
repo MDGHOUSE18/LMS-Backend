@@ -1,6 +1,7 @@
 using LMS.Application.Interfaces.Repositories.Loan;
 using LMS.Application.Interfaces.Services.Loan;
 using LMS.Domain.Entities.Loan;
+using LMS.Domain.Entities.Lookup;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
@@ -53,7 +54,7 @@ namespace LMS.Application.Services.Loan
 
             // Generate unique filename
             var fileName = $"{Guid.NewGuid()}{extension}";
-            
+
             // In production, upload to S3/Azure Blob Storage
             // For now, we'll store metadata only (actual file storage to be implemented)
             var s3Path = $"/documents/{loanId}/{fileName}";
@@ -63,16 +64,15 @@ namespace LMS.Application.Services.Loan
                 Id = Guid.NewGuid(),
                 LoanId = loanId,
                 UserId = userId,
-                Type = type,
+                Type = type.TypeName,
                 FileName = file.FileName,
                 FilePath = s3Path,
                 FileSize = file.Length,
-                VerificationStatus = VerificationStatus.Pending,
+                VerificationStatus = 1,
                 UploadedAt = DateTime.UtcNow
             };
 
             _documentRepository.Add(document);
-            await _documentRepository.UnitOfWork.SaveChangesAsync();
 
             return document;
         }
@@ -88,16 +88,16 @@ namespace LMS.Application.Services.Loan
             if (document == null)
                 throw new ArgumentException("Document not found");
 
-            if (document.VerificationStatus != VerificationStatus.Pending)
+            if (document.VerificationStatus != 1)
                 throw new InvalidOperationException("Document already verified");
 
-            document.VerificationStatus = isApproved ? VerificationStatus.Verified : VerificationStatus.Rejected;
+            document.VerificationStatus = isApproved ? 2 : 3;
             document.VerifiedBy = verifiedByUserId;
             document.VerifiedAt = DateTime.UtcNow;
             document.RejectionReason = rejectionReason;
 
             _documentRepository.Update(document);
-            await _documentRepository.UnitOfWork.SaveChangesAsync();
+            
 
             return document;
         }
@@ -110,14 +110,21 @@ namespace LMS.Application.Services.Loan
         public async Task<bool> AreAllDocumentsVerifiedAsync(Guid loanId)
         {
             var documents = await _documentRepository.GetByLoanIdAsync(loanId);
-            
+
             // Check if all required documents are present and verified
-            var requiredTypes = new[] { DocumentType.Aadhaar, DocumentType.PAN, DocumentType.SalarySlip };
-            
+            var requiredTypes = new[]
+                {
+                    "Aadhaar",
+                    "PAN",
+                    "Salary Slip"
+                };
+
             foreach (var requiredType in requiredTypes)
             {
-                var doc = documents.FirstOrDefault(d => d.Type == requiredType);
-                if (doc == null || doc.VerificationStatus != VerificationStatus.Verified)
+                var doc = documents.FirstOrDefault(
+                        d => d.Type == requiredType
+                    );
+                if (doc == null || doc.VerificationStatus != 2)
                     return false;
             }
 

@@ -7,7 +7,6 @@ namespace LMS.Application.Interfaces.Repositories.Loan
 {
     public interface ILoanRepository : IRepository<LoanApplication>
     {
-        Task<LoanApplication?> GetByIdAsync(int id);
         Task<List<LoanApplication>> GetByUserIdAsync(Guid userId);
         Task<List<LoanApplication>> GetPendingApplicationsAsync();
         Task<List<LoanApplication>> GetAllLoansAsync();

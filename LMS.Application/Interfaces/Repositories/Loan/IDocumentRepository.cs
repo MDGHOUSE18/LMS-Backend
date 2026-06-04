@@ -7,9 +7,10 @@ namespace LMS.Application.Interfaces.Repositories.Loan
 {
     public interface IDocumentRepository : IRepository<Document>
     {
+        void Add(Document entity);
+        void Delete(Document entity);
         Task<List<Document>> GetByLoanIdAsync(Guid loanId);
-        Task<Document?> GetByIdAsync(Guid id);
-        Task<List<Document>> GetPendingVerificationAsync();
         Task<List<Document>> GetByUserIdAsync(Guid userId);
+        Task<List<Document>> GetPendingVerificationAsync();
     }
 }

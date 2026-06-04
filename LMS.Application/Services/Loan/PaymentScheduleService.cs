@@ -1,4 +1,5 @@
 using LMS.Application.Interfaces.Services.Loan;
+using LMS.Application.Interfaces.Repositories.Loan;
 using LMS.Domain.Entities.Loan;
 using LMS.Domain.Enums;
 using System;
@@ -44,15 +45,15 @@ namespace LMS.Application.Services.Loan
             }
 
             var payments = new List<Payment>();
-            decimal outstandingPrincipal = loan.FinancialDetails!.LoanAmount;
-            double monthlyRate = loan.FinancialDetails.InterestRate.Value / 12 / 100;
-            int tenureMonths = loan.FinancialDetails.TenureMonths;
-            decimal monthlyEmi = loan.FinancialDetails.CalculatedEmi;
+            decimal outstandingPrincipal = loan.LoanAmount;
+            decimal monthlyRate = loan.InterestRate / 12 / 100;
+            int tenureMonths = loan.TenureMonths;
+            decimal monthlyEmi = loan.CalculatedEMI ?? 0;
             DateTime nextDueDate = loan.ApprovedDate.Value.AddMonths(1);
 
             for (int month = 1; month <= tenureMonths; month++)
             {
-                decimal interestComponent = (decimal)(outstandingPrincipal * (decimal)monthlyRate);
+                decimal interestComponent = outstandingPrincipal * monthlyRate;
                 decimal principalComponent = monthlyEmi - interestComponent;
 
                 // Adjust last month for rounding errors
@@ -71,7 +72,7 @@ namespace LMS.Application.Services.Loan
                     Amount = monthlyEmi,
                     PrincipalPart = principalComponent,
                     InterestPart = interestComponent,
-                    Status = PaymentStatus.Pending,
+                    Status = PaymentStatus.Pending.ToString(),
                     CreatedAt = DateTime.UtcNow
                 });
 
@@ -83,8 +84,6 @@ namespace LMS.Application.Services.Loan
             {
                 _paymentRepository.Add(payment);
             }
-
-            await _paymentRepository.UnitOfWork.SaveChangesAsync();
         }
 
         public async Task<List<Payment>> GetScheduleAsync(Guid loanId)
@@ -98,11 +97,10 @@ namespace LMS.Application.Services.Loan
             var payment = await _paymentRepository.GetByIdAsync(paymentId);
             if (payment == null) throw new ArgumentException("Payment not found", nameof(paymentId));
 
-            payment.Status = PaymentStatus.Paid;
+            payment.Status = PaymentStatus.Paid.ToString();
             payment.PaidDate = paidDate;
             
             _paymentRepository.Update(payment);
-            await _paymentRepository.UnitOfWork.SaveChangesAsync();
         }
 
         public async Task MarkAsMissedAsync(Guid paymentId)
@@ -110,17 +108,17 @@ namespace LMS.Application.Services.Loan
             var payment = await _paymentRepository.GetByIdAsync(paymentId);
             if (payment == null) throw new ArgumentException("Payment not found", nameof(paymentId));
 
-            payment.Status = PaymentStatus.Missed;
+            payment.Status = PaymentStatus.Missed.ToString();
             
             _paymentRepository.Update(payment);
-            await _paymentRepository.UnitOfWork.SaveChangesAsync();
         }
 
         public async Task<List<Payment>> GetOverduePaymentsAsync(DateTime asOfDate)
         {
             var allPayments = await _paymentRepository.GetAllAsync();
             return allPayments
-                .Where(p => p.DueDate < asOfDate && p.Status == PaymentStatus.Pending)
+                .Where(p => p.Status == PaymentStatus.Pending.ToString())
+                .Where(p => p.DueDate < asOfDate)
                 .OrderBy(p => p.DueDate)
                 .ToList();
         }

@@ -8,6 +8,6 @@ namespace LMS.Application.Interfaces.Services.Loan
 {
     public interface IAuditService
     {
-        Task LogAsync(string entity, int entityId, string action, object? before, object? after);
+        Task LogAsync(string entity, Guid entityId, string action, object? before, object? after);
     }
 }

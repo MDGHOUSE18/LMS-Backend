@@ -31,13 +31,21 @@ namespace LMS.Infrastructure.Persistence.Repositories.Auth
 
         public async Task<User?> GetByIdAsync(int userId)
         {
-            return await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            var guidId = LegacyIntToGuid(userId);
+            return await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == guidId);
         }
 
         public async Task UpdateAsync(User user)
         {
             _dbContext.Users.Update(user);
             await _dbContext.SaveChangesAsync();
+        }
+
+        private static Guid LegacyIntToGuid(int value)
+        {
+            var bytes = new byte[16];
+            BitConverter.GetBytes(value).CopyTo(bytes, 0);
+            return new Guid(bytes);
         }
     }
 }

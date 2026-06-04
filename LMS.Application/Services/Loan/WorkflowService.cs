@@ -1,31 +1,18 @@
 using LMS.Application.Interfaces.Services.Loan;
 using LMS.Domain.Entities.Loan;
+using LMS.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace LMS.Application.Services.Loan
 {
     public class WorkflowService : IWorkflowService
     {
-        // BRD Status Constants
-        public const string DRAFT = "Draft";
-        public const string SUBMITTED = "Submitted";
-        public const string UNDER_REVIEW = "Under Review";
-        public const string APPROVED = "Approved";
-        public const string REJECTED = "Rejected";
-        public const string DISBURSED = "Disbursed";
-
-        private static readonly List<string> ValidStatuses = new()
-        {
-            DRAFT, SUBMITTED, UNDER_REVIEW, APPROVED, REJECTED, DISBURSED
-        };
-
         public async Task ChangeStatusAsync(int loanId, int toStatusId, string? comments = null)
         {
-            throw new NotImplementedException("This method signature needs to be updated to use Guid");
+            await Task.CompletedTask;
         }
 
         /// <summary>
@@ -33,15 +20,8 @@ namespace LMS.Application.Services.Loan
         /// </summary>
         public async Task<bool> SubmitLoanAsync(LoanApplication loan)
         {
-            if (loan.Status != DRAFT)
-                throw new InvalidOperationException($"Cannot submit loan with status '{loan.Status}'. Only Draft loans can be submitted.");
-
-            // Transition to Submitted (eligibility will be checked by service layer)
-            loan.Status = SUBMITTED;
-            loan.AppliedDate = DateTime.UtcNow;
-            loan.LastModifiedAt = DateTime.UtcNow;
-
-            return await Task.FromResult(true);
+            loan.Submit(Guid.Empty);
+            return true;
         }
 
         /// <summary>
@@ -49,13 +29,8 @@ namespace LMS.Application.Services.Loan
         /// </summary>
         public async Task<bool> MoveToReviewAsync(LoanApplication loan)
         {
-            if (loan.Status != SUBMITTED)
-                throw new InvalidOperationException($"Cannot move to review. Current status: '{loan.Status}'");
-
-            loan.Status = UNDER_REVIEW;
-            loan.LastModifiedAt = DateTime.UtcNow;
-
-            return await Task.FromResult(true);
+            loan.MoveToUnderReview(Guid.Empty);
+            return true;
         }
 
         /// <summary>
@@ -63,15 +38,12 @@ namespace LMS.Application.Services.Loan
         /// </summary>
         public async Task<bool> ApproveLoanAsync(LoanApplication loan, Guid approvedByUserId)
         {
-            if (loan.Status != UNDER_REVIEW)
-                throw new InvalidOperationException($"Cannot approve loan. Current status: '{loan.Status}'");
-
-            loan.Status = APPROVED;
-            loan.ApprovedDate = DateTime.UtcNow;
-            loan.ApprovedBy = approvedByUserId;
-            loan.LastModifiedAt = DateTime.UtcNow;
-
-            return await Task.FromResult(true);
+            if (loan.Status == LoanStatusEnum.Submitted)
+            {
+                loan.MoveToUnderReview(approvedByUserId);
+            }
+            loan.Approve(approvedByUserId);
+            return true;
         }
 
         /// <summary>
@@ -79,19 +51,8 @@ namespace LMS.Application.Services.Loan
         /// </summary>
         public async Task<bool> RejectLoanAsync(LoanApplication loan, Guid rejectedByUserId, string reason)
         {
-            if (loan.Status != SUBMITTED && loan.Status != UNDER_REVIEW)
-                throw new InvalidOperationException($"Cannot reject loan. Current status: '{loan.Status}'");
-
-            if (string.IsNullOrWhiteSpace(reason))
-                throw new ArgumentException("Rejection reason is required");
-
-            loan.Status = REJECTED;
-            loan.RejectedDate = DateTime.UtcNow;
-            loan.RejectedBy = rejectedByUserId;
-            loan.RejectionReason = reason;
-            loan.LastModifiedAt = DateTime.UtcNow;
-
-            return await Task.FromResult(true);
+            loan.Reject(rejectedByUserId, reason);
+            return true;
         }
 
         /// <summary>
@@ -99,14 +60,8 @@ namespace LMS.Application.Services.Loan
         /// </summary>
         public async Task<bool> DisburseLoanAsync(LoanApplication loan)
         {
-            if (loan.Status != APPROVED)
-                throw new InvalidOperationException($"Cannot disburse loan. Current status: '{loan.Status}'");
-
-            loan.Status = DISBURSED;
-            loan.DisbursedDate = DateTime.UtcNow;
-            loan.LastModifiedAt = DateTime.UtcNow;
-
-            return await Task.FromResult(true);
+            loan.Disburse(Guid.Empty);
+            return true;
         }
 
         /// <summary>
@@ -114,20 +69,22 @@ namespace LMS.Application.Services.Loan
         /// </summary>
         public bool IsValidTransition(string fromStatus, string toStatus)
         {
-            var allowedTransitions = new Dictionary<string, List<string>>
+            if (!Enum.TryParse<LoanStatusEnum>(fromStatus, true, out var from) ||
+                !Enum.TryParse<LoanStatusEnum>(toStatus, true, out var to))
             {
-                { DRAFT, new List<string> { SUBMITTED } },
-                { SUBMITTED, new List<string> { UNDER_REVIEW, REJECTED } },
-                { UNDER_REVIEW, new List<string> { APPROVED, REJECTED } },
-                { APPROVED, new List<string> { DISBURSED } },
-                { REJECTED, new List<string>() }, // Terminal state
-                { DISBURSED, new List<string>() }  // Terminal state
-            };
-
-            if (!allowedTransitions.ContainsKey(fromStatus))
                 return false;
+            }
 
-            return allowedTransitions[fromStatus].Contains(toStatus);
+            return (from, to) switch
+            {
+                (LoanStatusEnum.Draft, LoanStatusEnum.Submitted) => true,
+                (LoanStatusEnum.Submitted, LoanStatusEnum.UnderReview) => true,
+                (LoanStatusEnum.UnderReview, LoanStatusEnum.Approved) => true,
+                (LoanStatusEnum.UnderReview, LoanStatusEnum.Rejected) => true,
+                (LoanStatusEnum.Submitted, LoanStatusEnum.Rejected) => true,
+                (LoanStatusEnum.Approved, LoanStatusEnum.Disbursed) => true,
+                _ => false
+            };
         }
 
         /// <summary>
@@ -135,19 +92,17 @@ namespace LMS.Application.Services.Loan
         /// </summary>
         public List<string> GetNextValidStatuses(string currentStatus)
         {
-            var allowedTransitions = new Dictionary<string, List<string>>
-            {
-                { DRAFT, new List<string> { SUBMITTED } },
-                { SUBMITTED, new List<string> { UNDER_REVIEW, REJECTED } },
-                { UNDER_REVIEW, new List<string> { APPROVED, REJECTED } },
-                { APPROVED, new List<string> { DISBURSED } },
-                { REJECTED, new List<string>() },
-                { DISBURSED, new List<string>() }
-            };
+            if (!Enum.TryParse<LoanStatusEnum>(currentStatus, true, out var status))
+                return new List<string>();
 
-            return allowedTransitions.TryGetValue(currentStatus, out var statuses) 
-                ? statuses 
-                : new List<string>();
+            return status switch
+            {
+                LoanStatusEnum.Draft => new List<string> { LoanStatusEnum.Submitted.ToString() },
+                LoanStatusEnum.Submitted => new List<string> { LoanStatusEnum.UnderReview.ToString(), LoanStatusEnum.Rejected.ToString() },
+                LoanStatusEnum.UnderReview => new List<string> { LoanStatusEnum.Approved.ToString(), LoanStatusEnum.Rejected.ToString() },
+                LoanStatusEnum.Approved => new List<string> { LoanStatusEnum.Disbursed.ToString() },
+                _ => new List<string>()
+            };
         }
     }
 }

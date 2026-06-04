@@ -9,6 +9,7 @@ namespace LMS.Application.Interfaces.Common
     public interface ICurrentUserService
     {
         int UserId { get; }
+        Guid GetCurrentUserId();
         string Email { get; }
         string Role { get; }
         bool IsAuthenticated { get; }

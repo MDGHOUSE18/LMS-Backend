@@ -3,8 +3,10 @@ using LMS.Domain.Entities.Auth;
 using LMS.Domain.Entities.Loan;
 using LMS.Domain.Entities.Lookup;
 using LMS.Domain.Entities.Workflow;
+using AuditLog = LMS.Domain.Entities.Audit.AuditLog;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,8 +20,8 @@ namespace LMS.Infrastructure.Persistence.Context
     public class LMSDbContext : DbContext, IUnitOfWork
     {
         private readonly IHttpContextAccessor? _httpContextAccessor;
-        private readonly string? _currentUserId;
-        private readonly string? _currentUserIpAddress;
+        private string? _currentUserId;
+        private string? _currentUserIpAddress;
 
         public LMSDbContext(DbContextOptions<LMSDbContext> options) 
             : this(options, null, null, null) { }
@@ -160,24 +162,6 @@ namespace LMS.Infrastructure.Persistence.Context
                 .HasForeignKey(l => l.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<LoanApplication>()
-                .HasOne(l => l.Status)
-                .WithMany()
-                .HasForeignKey(l => l.StatusId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<LoanApplication>()
-                .HasOne(l => l.Purpose)
-                .WithMany()
-                .HasForeignKey(l => l.PurposeId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<LoanApplication>()
-                .HasOne(l => l.EmploymentType)
-                .WithMany()
-                .HasForeignKey(l => l.EmploymentTypeId)
-                .OnDelete(DeleteBehavior.Restrict);
-
             modelBuilder.Entity<LoanFinancialDetails>()
                 .HasOne(f => f.LoanApplication)
                 .WithOne() // 1:1 relationship
@@ -197,28 +181,10 @@ namespace LMS.Infrastructure.Persistence.Context
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Document>()
-                .HasOne(d => d.LoanApplication)
-                .WithMany()
-                .HasForeignKey(d => d.LoanApplicationId)
+                .HasOne(d => d.Loan)
+                .WithMany(la => la.Documents)
+                .HasForeignKey(d => d.LoanId)
                 .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Document>()
-                .HasOne(d => d.DocumentType)
-                .WithMany(dt => dt.Documents)
-                .HasForeignKey(d => d.DocumentTypeId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Document>()
-                .HasOne(d => d.VerificationStatus)
-                .WithMany()
-                .HasForeignKey(d => d.VerificationStatusId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Document>()
-                .HasOne(d => d.UploadedByUser)
-                .WithMany()
-                .HasForeignKey(d => d.UploadedBy)
-                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<EligibilityResult>()
                 .HasOne(e => e.LoanApplication)
@@ -233,37 +199,8 @@ namespace LMS.Infrastructure.Persistence.Context
                 .HasForeignKey(h => h.LoanApplicationId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // LoanApplication → User relationship
-            modelBuilder.Entity<LoanApplication>()
-                .HasOne(la => la.User)
-                .WithMany(u => u.LoanApplications)
-                .HasForeignKey(la => la.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // LoanFinancialDetails → LoanApplication relationship
-            modelBuilder.Entity<LoanFinancialDetails>()
-                .HasOne(lfd => lfd.LoanApplication)
-                .WithOne(la => la.FinancialDetails)
-                .HasForeignKey<LoanFinancialDetails>(lfd => lfd.LoanApplicationId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // Document → LoanApplication relationship
-            modelBuilder.Entity<Document>()
-                .HasOne(d => d.LoanApplication)
-                .WithMany(la => la.Documents)
-                .HasForeignKey(d => d.LoanId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // Document → User (uploaded by) relationship
-            modelBuilder.Entity<Document>()
-                .HasOne(d => d.User)
-                .WithMany()
-                .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // Payment → LoanApplication relationship
             modelBuilder.Entity<Payment>()
-                .HasOne(p => p.LoanApplication)
+                .HasOne(p => p.Loan)
                 .WithMany(la => la.Payments)
                 .HasForeignKey(p => p.LoanId)
                 .OnDelete(DeleteBehavior.Cascade);

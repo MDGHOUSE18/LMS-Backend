@@ -1,10 +1,11 @@
 using LMS.Application.DTOs.Document;
+using LMS.Application.Interfaces.Common;
 using LMS.Application.Interfaces.Services.Loan;
 using LMS.Domain.Entities.Loan;
+using LMS.Domain.Entities.Lookup;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace LMS.API.Controllers
 {
@@ -48,7 +49,8 @@ namespace LMS.API.Controllers
                     return BadRequest(new { message = "File size cannot exceed 5MB" });
 
                 // Parse document type
-                if (!Enum.TryParse<DocumentType>(documentType, true, out var docType))
+                var docType = new DocumentType { TypeName = documentType };
+                if (string.IsNullOrWhiteSpace(docType.TypeName))
                     return BadRequest(new { message = "Invalid document type. Valid types: Aadhaar, PAN, SalarySlip, BankStatement" });
 
                 // Get current user ID
@@ -154,7 +156,7 @@ namespace LMS.API.Controllers
 
                 return Ok(new
                 {
-                    message = document.VerificationStatus == VerificationStatus.Verified 
+                    message = document.VerificationStatus == 2 
                         ? "Document verified successfully" 
                         : "Document rejected",
                     documentId = document.Id,

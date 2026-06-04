@@ -32,7 +32,7 @@ namespace LMS.API.Controllers
         }
 
         [HttpPost("submit/{loanId}")]
-        public async Task<IActionResult> Submit(int loanId)
+        public async Task<IActionResult> Submit(Guid loanId)
         {
             await _loanService.SubmitLoanAsync(loanId);
             return Ok();

@@ -8,9 +8,9 @@ namespace LMS.Application.Interfaces.Services.Loan
 {
     public interface ILoanService
     {
-        Task<int> CreateDraftAsync(CreateLoanRequest request);
+        Task<Guid> CreateDraftAsync(CreateLoanRequest request);
         Task UpdateDraftAsync(UpdateLoanRequest request);
-        Task SubmitLoanAsync(int loanId);
+        Task SubmitLoanAsync(Guid loanId);
         Task<LoanApplication?> GetByIdAsync(Guid loanId);
         Task<List<LoanApplication>> GetLoansByUserIdAsync(Guid userId);
         Task<List<LoanApplication>> GetPendingApplicationsAsync();

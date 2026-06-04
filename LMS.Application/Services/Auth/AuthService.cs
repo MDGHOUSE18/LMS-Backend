@@ -66,7 +66,7 @@ namespace LMS.Application.Services.Auth
                 Email = request.Email,
                 Mobile = request.MobileNumber,
                 PasswordHash = hashedPassword,
-                RoleId = defaultRoleId,
+                RoleId = LegacyIntToGuid(defaultRoleId),
                 IsActive = true,
                 IsEmailVerified = false, // 🔴 Important
                 CreatedAt = DateTime.UtcNow,
@@ -81,7 +81,7 @@ namespace LMS.Application.Services.Auth
 
             var emailToken = new EmailVerificationToken
             {
-                UserId = user.Id,
+                UserId = ToLegacyInt(user.Id),
                 TokenHash = tokenHash,
                 ExpiresAt = DateTime.UtcNow.AddMinutes(30),
                 CreatedAt = DateTime.UtcNow,
@@ -125,7 +125,7 @@ namespace LMS.Application.Services.Auth
 
             // 🔴 OPTIONAL BUT RECOMMENDED
             // Invalidate old tokens to avoid multiple valid tokens
-            await _emailVerificationRepository.InvalidateOldTokensAsync(user.Id);
+            await _emailVerificationRepository.InvalidateOldTokensAsync(ToLegacyInt(user.Id));
 
             // 🔐 Generate new token
             var plainToken = GenerateSecureToken();
@@ -133,7 +133,7 @@ namespace LMS.Application.Services.Auth
 
             var emailToken = new EmailVerificationToken
             {
-                UserId = user.Id,
+                UserId = ToLegacyInt(user.Id),
                 TokenHash = tokenHash,
                 ExpiresAt = DateTime.UtcNow.AddMinutes(30),
                 CreatedAt = DateTime.UtcNow,
@@ -207,7 +207,7 @@ namespace LMS.Application.Services.Auth
             {
                 await _userLoginHistoryRepository.AddAsync(new UserLoginHistory
                 {
-                    UserId = user.Id,
+                    UserId = ToLegacyInt(user.Id),
                     LoginTime = DateTime.UtcNow,
                     IpAddress = ipAddress,
                     UserAgent = userAgent,
@@ -238,7 +238,7 @@ namespace LMS.Application.Services.Auth
             {
                 await _userLoginHistoryRepository.AddAsync(new UserLoginHistory
                 {
-                    UserId = user.Id,
+                    UserId = ToLegacyInt(user.Id),
                     LoginTime = DateTime.UtcNow,
                     IpAddress = ipAddress,
                     UserAgent = userAgent,
@@ -248,7 +248,7 @@ namespace LMS.Application.Services.Auth
                 throw new UnauthorizedException("Invalid password. Please enter the correct password or reset it if you have forgotten it.");
             }
 
-            await _refreshTokenRepository.RevokeUserTokensAsync(user.Id);
+            await _refreshTokenRepository.RevokeUserTokensAsync(ToLegacyInt(user.Id));
 
             var otp = await _otpService.GenerateOtpAsync(user, OtpPurpose.Login);
             await _notificationService.SendOtpAsync(user.Email, otp);
@@ -268,7 +268,7 @@ namespace LMS.Application.Services.Auth
             bool isValid = await _otpService.VerifyOtpAsync(user, request.Otp, OtpPurpose.Login);
             if (!isValid)
             {
-                var otpAttempts = await _otpService.GetOtpAttemptsAsync(user.Id, OtpPurpose.Login);
+                var otpAttempts = await _otpService.GetOtpAttemptsAsync(ToLegacyInt(user.Id), OtpPurpose.Login);
                 if (otpAttempts == 5)
                 {
                     user.IsLocked = true;
@@ -279,7 +279,7 @@ namespace LMS.Application.Services.Auth
                 }
                 await _userLoginHistoryRepository.AddAsync(new UserLoginHistory
                 {
-                    UserId = user.Id,
+                    UserId = ToLegacyInt(user.Id),
                     LoginTime = DateTime.UtcNow,
                     IpAddress = ipAddress,
                     UserAgent = userAgent,
@@ -292,7 +292,7 @@ namespace LMS.Application.Services.Auth
                         : "Invalid OTP. Please enter a valid OTP."
                 );
             }
-            var roleName = await _roleRepository.GetRoleNameByIdAsync(user.RoleId);
+            var roleName = await _roleRepository.GetRoleNameByIdAsync(ToLegacyInt(user.RoleId));
 
             if (string.IsNullOrEmpty(roleName))
             {
@@ -304,7 +304,7 @@ namespace LMS.Application.Services.Auth
 
             await _refreshTokenRepository.CreateAsync(new UserRefreshToken
             {
-                UserId = user.Id,
+                UserId = ToLegacyInt(user.Id),
                 TokenHash = refreshTokenHash,
                 ExpiryDate = DateTime.UtcNow.AddDays(7),
                 CreatedAt = DateTime.UtcNow,
@@ -313,7 +313,7 @@ namespace LMS.Application.Services.Auth
 
             await _userLoginHistoryRepository.AddAsync(new UserLoginHistory
             {
-                UserId = user.Id,
+                UserId = ToLegacyInt(user.Id),
                 LoginTime = DateTime.UtcNow,
                 IpAddress = ipAddress,
                 UserAgent = userAgent,
@@ -327,7 +327,7 @@ namespace LMS.Application.Services.Auth
                 AccessTokenExpiry = DateTime.UtcNow.AddHours(1),
                 User = new UserDto
                 {
-                    Id = user.Id,
+                    Id = ToLegacyInt(user.Id),
                     FullName = user.FullName,
                     Email = user.Email,
                     Role = roleName
@@ -368,7 +368,7 @@ namespace LMS.Application.Services.Auth
             {
                 throw new ForbiddenException("User account is inactive.");
             }
-            var roleName = await _roleRepository.GetRoleNameByIdAsync(user.RoleId);
+            var roleName = await _roleRepository.GetRoleNameByIdAsync(ToLegacyInt(user.RoleId));
             if (string.IsNullOrEmpty(roleName))
             {
                 throw new UnauthorizedException("User role configuration is invalid.");
@@ -385,7 +385,7 @@ namespace LMS.Application.Services.Auth
 
             await _refreshTokenRepository.CreateAsync(new UserRefreshToken
             {
-                UserId = user.Id,
+                UserId = ToLegacyInt(user.Id),
                 TokenHash = newRefreshTokenHash,
                 ExpiryDate = DateTime.UtcNow.AddDays(7),
                 CreatedAt = DateTime.UtcNow,
@@ -399,7 +399,7 @@ namespace LMS.Application.Services.Auth
                 AccessTokenExpiry = DateTime.UtcNow.AddHours(1),
                 User = new UserDto
                 {
-                    Id = user.Id,
+                    Id = ToLegacyInt(user.Id),
                     Email = user.Email,
                     FullName = user.FullName,
                     Role = roleName
@@ -432,7 +432,7 @@ namespace LMS.Application.Services.Auth
 
             var resetToken = new PasswordResetToken
             {
-                UserId = user.Id,
+                UserId = ToLegacyInt(user.Id),
                 TokenHash = tokenHash,
                 ExpiresAt = DateTime.UtcNow.AddMinutes(10),
                 IsUsed = false,
@@ -474,7 +474,7 @@ namespace LMS.Application.Services.Auth
             tokenEntity.IsUsed = true;
             await _passwordResetTokenRepository.UpdateAsync(tokenEntity);
 
-            await _refreshTokenRepository.RevokeUserTokensAsync(user.Id);
+            await _refreshTokenRepository.RevokeUserTokensAsync(ToLegacyInt(user.Id));
 
             return "Password reset successful";
         }
@@ -488,6 +488,19 @@ namespace LMS.Application.Services.Auth
             }
 
             return Convert.ToBase64String(bytes);
+        }
+
+        private static int ToLegacyInt(Guid id)
+        {
+            var bytes = id.ToByteArray();
+            return Math.Abs(BitConverter.ToInt32(bytes, 0));
+        }
+
+        private static Guid LegacyIntToGuid(int value)
+        {
+            var bytes = new byte[16];
+            BitConverter.GetBytes(value).CopyTo(bytes, 0);
+            return new Guid(bytes);
         }
     }
 }

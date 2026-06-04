@@ -1,4 +1,5 @@
 using LMS.Domain.Entities.Loan;
+using LMS.Domain.Entities.Lookup;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
